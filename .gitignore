@@ -1,0 +1,28 @@
+# sbt / Scala
+target/
+project/target/
+project/project/
+.bsp/
+.bloop/
+.metals/
+.scala-build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# VS Code / Metals
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Environment / local config
+.env
+.env.*
+!.env.example

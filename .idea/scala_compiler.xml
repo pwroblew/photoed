@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="separateProdTestSources" value="true" />
+    <profile name="sbt 1" modules="photoed,photoed.main,photoed.test,photoed_5294,photoed_5294.main,photoed_5294.test" />
+  </component>
+</project>
