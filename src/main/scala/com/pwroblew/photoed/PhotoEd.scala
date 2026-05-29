@@ -14,31 +14,33 @@ object PhotoEd extends IOApp.Simple {
 
   private def commandLoop(appState: Ref[IO, AppState]): IO[Unit] = {
     for {
-      command <- IO.print("Please provide a command: ") *> IO.readLine
-      _       <- process(command, appState)
+      cmd <- IO.print("Please provide a command: ") *> IO.readLine
+      _   <- cmd match
+               case "exit" => IO.unit
+               case _      => process(cmd, appState).handleErrorWith { case e: Exception =>
+                   IO.println(s"${e.getMessage}. To exit type 'exit'.")
+                 }
+                   *> commandLoop(appState)
+
     } yield ()
   }
 
   private def process(command: String, appState: Ref[IO, AppState]): IO[Unit] = command match {
     case "load" => for {
-        loadedNew <- Ref.of[IO, AppState](AppState("[loaded]".some))
-        imageDesc <- loadedNew.get.map(_.imageDesc)
+        _         <- appState.update(_ => AppState("[loaded]".some))
+        imageDesc <- appState.get.map(_.imageDesc)
         _         <- printImageDesc(imageDesc)
-        _         <- commandLoop(loadedNew)
       } yield ()
 
     case "blur" => for {
         _         <- appState.update(state =>
-                       state.copy(imageDesc = state.imageDesc.map(str => str + "[blurred]"))
+                       state.copy(imageDesc = state.imageDesc.map(_ + "[blurred]"))
                      )
         imageDesc <- appState.get.map(_.imageDesc)
         _         <- printImageDesc(imageDesc)
-        _         <- commandLoop(appState)
       } yield ()
 
-    case "exit" => IO.unit
-
-    case _ => IO.println("Unsupported command. To exit type 'exit'.") *> commandLoop(appState)
+    case cmd: String => IO.raiseError(new Exception(s"Unsupported image processing command: \"$cmd\""))
   }
 
   private def printImageDesc(imageDesc: Option[String]): IO[Unit] = {
