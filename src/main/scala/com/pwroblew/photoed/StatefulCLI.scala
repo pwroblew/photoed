@@ -1,33 +1,28 @@
 package com.pwroblew.photoed
 
 import cats.effect.{IO, IOApp, Ref}
-
-type AppState = PhotoAppState
-val initialState: PhotoAppState = PhotoAppState.initState
+import com.pwroblew.photoed.lib.{Image, PhotoAppState}
 
 object StatefulCLI extends IOApp.Simple {
 
+  private type AppState = PhotoAppState
+  private val initialState: IO[Ref[IO, AppState]] = PhotoAppState.initialState[IO]
+  private val commandProcessingStatefulApp        = PhotoEdImpl[IO](Image.load, IO.println)
+
   override def run: IO[Unit] = for {
-    initState <- Ref.of[IO, AppState](initialState)
-    _         <- commandLoop(initState)
+    state0 <- initialState
+    _      <- commandLoop(state0)
   } yield ()
 
-  private def commandLoop(appState: Ref[IO, AppState]): IO[Unit] = {
-    given (String => IO[Unit]) = IO.println
+  private def commandLoop(appState: Ref[IO, AppState]): IO[Unit] =
     for {
-      cmd <- IO.print("Please provide a command: ") *> IO.readLine
-      _   <- cmd match
-               case "exit" => IO.unit
-               case _      => PhotoEdImpl[IO].process(cmd, appState)
-                   .handleErrorWith { case e: Exception =>
-                     IO.println(s"${e.getMessage}. To exit type 'exit'.")
-                   }
-                   *> commandLoop(appState)
+      command       <- IO.print("Please provide a command: ") *> IO.readLine
+      toBeContinued <- commandProcessingStatefulApp.process(command, appState)
+                         .handleErrorWith { case e: Exception =>
+                           IO.println(s"${e.getMessage}. To exit type 'exit'.") >> IO(true)
+                         }
+      _             <- if toBeContinued then commandLoop(appState) else IO.unit
 
     } yield ()
-  }
 
-  private def printImageDesc(imageDesc: Option[String]): IO[Unit] = {
-    IO.println(s"Image description: $imageDesc")
-  }
 }
