@@ -1,25 +1,25 @@
 package com.pwroblew.photoed.lib.impl_io
 
-import com.pwroblew.photoed.lib.Image
+import com.pwroblew.photoed.lib.EdImage
 
 import java.awt.{Dimension, Graphics}
 import javax.swing.JPanel
 
-final class ImageJPanel(private var image: Image) extends JPanel {
+final class EdImageJPanel(private var edImage: EdImage) extends JPanel {
 
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
-    image.draw(g)
+    edImage.draw(g)
   }
 
   override def getPreferredSize: Dimension =
-    new Dimension(image.width, image.height)
+    new Dimension(edImage.width, edImage.height)
 
-  def replaceImage(newImage: Image): Unit = {
-    image = newImage
+  def replaceImage(newEdImage: EdImage): Unit = {
+    edImage = newEdImage
     super.revalidate()
     super.repaint()
   }
 
-  def getImage: Image = image
+  def getImage: EdImage = edImage
 }

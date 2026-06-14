@@ -6,7 +6,9 @@
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_21">
     <output-test url="file://$MODULE_DIR$/../../../target/scala-3.8.3/test-classes" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../src/test" />
+    <content url="file://$MODULE_DIR$/../../../src/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../../src/test/scala" isTestSource="true" />
+    </content>
     <content url="file://$MODULE_DIR$/../../../target/scala-3.8.3/resource_managed/test" />
     <content url="file://$MODULE_DIR$/../../../target/scala-3.8.3/src_managed/test" />
     <orderEntry type="inheritedJdk" />
@@ -15,11 +17,19 @@
     <orderEntry type="module" module-name="photoed.main" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala3-library_3:3.8.3:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-effect_3:3.7.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalameta:munit_3:1.3.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.typelevel:munit-cats-effect_3:2.2.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:3.8.3:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-effect-kernel_3:3.7.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-effect-std_3:3.7.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-mtl_3:1.6.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalameta:junit-interface:1.3.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalameta:munit-diff_3:1.3.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: junit:junit:4.13.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.portable-scala:portable-scala-reflect_2.13:1.1.3:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-core_3:2.13.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-sbt:test-interface:1.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
     <orderEntry type="library" name="sbt: org.typelevel:cats-kernel_3:2.13.0:jar" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="photoed.main" />

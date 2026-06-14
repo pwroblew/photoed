@@ -1,16 +1,16 @@
 package com.pwroblew.photoed
 
 import cats.effect.{IO, IOApp}
-import com.pwroblew.photoed.lib.impl.PhotoEdImpl
-import com.pwroblew.photoed.lib.impl_io.ImageViewerImpl
-import com.pwroblew.photoed.lib.{Image, PhotoAppState}
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.impl_f.PhotoEdAppImpl
+import com.pwroblew.photoed.lib.impl_io.{EdImageLoaderImpl, EdImageViewerImpl}
 
 object StatefulCLI extends IOApp.Simple {
 
-  private type AppState = PhotoAppState
-  private val initialState: AppState       = PhotoAppState.initialState
+  private type AppState = PhotoEdAppState
+  private val initialState: AppState       = PhotoEdAppState.initialState
   private val commandProcessingStatefulApp =
-    PhotoEdImpl[IO](Image.load, IO.println, ImageViewerImpl.create("photoed"))
+    PhotoEdAppImpl[IO](EdImageLoaderImpl, EdImageViewerImpl)
 
   override def run: IO[Unit] = for {
     state0 <- IO.pure(initialState)
@@ -21,8 +21,10 @@ object StatefulCLI extends IOApp.Simple {
     for {
       command          <- IO.print("Please provide a command: ") *> IO.readLine
       (cont, newState) <- commandProcessingStatefulApp.process(command, appState)
-                            .handleErrorWith { e => IO.println(e.getMessage) *> IO(true, appState) }
-      _                <- if cont then commandLoop(newState) else IO.unit
+                            .handleErrorWith { e =>
+                              IO.println(e.getMessage) *> IO.pure((true, appState))
+                            }
+      _                <- if !cont then IO.unit else commandLoop(newState)
 
     } yield ()
 
