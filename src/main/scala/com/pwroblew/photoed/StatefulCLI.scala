@@ -3,14 +3,14 @@ package com.pwroblew.photoed
 import cats.effect.{IO, IOApp}
 import com.pwroblew.photoed.lib.PhotoEdAppState
 import com.pwroblew.photoed.lib.impl_f.PhotoEdAppImpl
-import com.pwroblew.photoed.lib.impl_io.{EdImageLoaderImpl, EdImageViewerImpl}
+import com.pwroblew.photoed.lib.impl_io.{EdImageFilesImpl, EdImageViewerImpl}
 
 object StatefulCLI extends IOApp.Simple {
 
   private type AppState = PhotoEdAppState
   private val initialState: AppState       = PhotoEdAppState.initialState
   private val commandProcessingStatefulApp =
-    PhotoEdAppImpl[IO](EdImageLoaderImpl, EdImageViewerImpl)
+    PhotoEdAppImpl[IO](EdImageFilesImpl, EdImageViewerImpl)
 
   override def run: IO[Unit] = for {
     state0 <- IO.pure(initialState)

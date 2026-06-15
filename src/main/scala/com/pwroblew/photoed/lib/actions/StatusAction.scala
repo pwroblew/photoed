@@ -4,7 +4,7 @@ import cats.MonadThrow
 import cats.data.{EitherT, OptionT}
 import cats.effect.std.Console
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.{EdImage, EdImageLoader, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
 class StatusAction[F[_]: {Console, MonadThrow}] extends EditorAction[F] {
 

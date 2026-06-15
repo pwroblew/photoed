@@ -3,12 +3,12 @@ package com.pwroblew.photoed.lib.actions
 import cats.MonadThrow
 import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.transformations.simple.{Grayscale, Invert}
-import com.pwroblew.photoed.lib.{EdImageLoader, EdImageViewer}
+import com.pwroblew.photoed.lib.{EdImageFiles, EdImageViewer}
 
 object EditorActions {
   def actions[F[_]: {MonadThrow,
     Console}](
-      imageLoader: EdImageLoader[F],
+      imageLoader: EdImageFiles[F],
       imageViewer: EdImageViewer[F]
   ): Map[String, EditorAction[F]]      = Map(
     "load"      -> new LoadAction[F](imageLoader),

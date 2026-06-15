@@ -3,7 +3,7 @@ package com.pwroblew.photoed.lib.impl_io
 import cats.effect.IO
 import cats.implicits.catsSyntaxEq
 import cats.syntax.all.catsSyntaxEitherId
-import com.pwroblew.photoed.lib.{EdImage, EdImageLoader}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles}
 
 import java.awt.image.BufferedImage
 import java.awt.{Color, Graphics2D}
@@ -11,7 +11,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import scala.util.matching.Regex
 
-object EdImageLoaderImpl extends EdImageLoader[IO] {
+object EdImageFilesImpl extends EdImageFiles[IO] {
 
   private val FilenameRegex: Regex = raw".*\.([a-zA-Z]{2,4})".r
 

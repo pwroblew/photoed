@@ -10,7 +10,7 @@ import com.pwroblew.photoed.lib.*
 import com.pwroblew.photoed.lib.actions.*
 
 final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
-    private val imageLoader: EdImageLoader[F],
+    private val imageLoader: EdImageFiles[F],
     private val imageViewer: EdImageViewer[F]
 ) extends PhotoEdApp[F] {
 
@@ -19,7 +19,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
       appState: PhotoEdAppState
   ): F[(Boolean, PhotoEdAppState)] = {
 
-    val commandDetails: List[String]          = command.split(" ").toList
+    val commandDetails: List[String]          = command.trim.split("\\s+", 2).toList
     val actions: Map[String, EditorAction[F]] = EditorActions.actions(imageLoader, imageViewer)
 
     for {
@@ -38,7 +38,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
 
 object PhotoEdAppImpl {
   def apply[F[_]: {MonadThrow, Console}](
-      imageLoader: EdImageLoader[F],
+      imageLoader: EdImageFiles[F],
       imageViewer: EdImageViewer[F]
   ): PhotoEdAppImpl[F] =
     new PhotoEdAppImpl[F](imageLoader, imageViewer)

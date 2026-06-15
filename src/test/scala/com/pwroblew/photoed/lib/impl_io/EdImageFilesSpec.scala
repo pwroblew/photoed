@@ -2,15 +2,15 @@ package com.pwroblew.photoed.lib.impl_io
 
 import cats.effect.IO
 import com.pwroblew.photoed.lib.actions.transformations.simple.Pixel
-import com.pwroblew.photoed.lib.{EdImage, EdImageLoader}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles}
 import munit.CatsEffectSuite
 
 import java.awt.image.BufferedImage
 import java.io.File
 
-class EdImageLoaderSpec extends CatsEffectSuite {
+class EdImageFilesSpec extends CatsEffectSuite {
 
-  val loader: EdImageLoader[IO] = EdImageLoaderImpl
+  val loader: EdImageFiles[IO] = EdImageFilesImpl
 
   test("save and load png image") {
     val buffImage = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB)

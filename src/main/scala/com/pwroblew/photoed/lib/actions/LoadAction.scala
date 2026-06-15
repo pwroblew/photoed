@@ -3,9 +3,9 @@ package com.pwroblew.photoed.lib.actions
 import cats.Monad
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.actions.LoadAction.loadImage
-import com.pwroblew.photoed.lib.{EdImage, EdImageLoader, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
-class LoadAction[F[_]: Monad](imageLoader: EdImageLoader[F]) extends EditorAction[F] {
+class LoadAction[F[_]: Monad](imageLoader: EdImageFiles[F]) extends EditorAction[F] {
 
   override def run(
       state: PhotoEdAppState,
