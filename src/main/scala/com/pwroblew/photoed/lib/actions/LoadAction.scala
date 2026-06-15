@@ -1,13 +1,14 @@
 package com.pwroblew.photoed.lib.actions
 
-import cats.Monad
+import cats.MonadThrow
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.actions.LoadAction.loadImage
-import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, EdImageViewer, PhotoEdAppState}
 
-class LoadAction[F[_]: Monad](imageLoader: EdImageFiles[F]) extends EditorAction[F] {
+class LoadAction[F[_]: MonadThrow](imageLoader: EdImageFiles[F], imageViewer: EdImageViewer[F])
+    extends EditorAction[F] {
 
-  override def run(
+  override def act(
       state: PhotoEdAppState,
       commandDetails: List[String]
   ): F[(Boolean, PhotoEdAppState)] = {
@@ -15,10 +16,12 @@ class LoadAction[F[_]: Monad](imageLoader: EdImageFiles[F]) extends EditorAction
     loadImage(imageLoader.load)(path)(state)
   }
 
+  override def next: EditorAction[F] = new ShowAction[F](imageViewer)
+
 }
 
 object LoadAction {
-  def loadImage[F[_]: Monad](edImageLoader: String => F[EdImage])(path: Option[String])(
+  def loadImage[F[_]: MonadThrow](edImageLoader: String => F[EdImage])(path: Option[String])(
       appState: PhotoEdAppState
   )
       : F[(Boolean, PhotoEdAppState)] = {

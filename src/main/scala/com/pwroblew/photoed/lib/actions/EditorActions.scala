@@ -11,15 +11,15 @@ object EditorActions {
       imageLoader: EdImageFiles[F],
       imageViewer: EdImageViewer[F]
   ): Map[String, EditorAction[F]]      = Map(
-    "load"      -> new LoadAction[F](imageLoader),
-    "load-res"  -> new LoadResAction[F](imageLoader),
+    "load"      -> new LoadAction[F](imageLoader, imageViewer),
+    "load-res"  -> new LoadResAction[F](imageLoader, imageViewer),
     "save"      -> new SaveAction[F](imageLoader),
     "save-res"  -> new SaveResAction[F](imageLoader),
-    "exit"      -> new ExitAction[F],
-    "invert"    -> new TransformAction[F](Invert),
-    "grayscale" -> new TransformAction[F](Grayscale),
+    "exit"      -> new ExitAction[F](imageViewer),
+    "invert"    -> new TransformAction[F](Invert, imageViewer),
+    "grayscale" -> new TransformAction[F](Grayscale, imageViewer),
     "status"    -> new StatusAction[F],
-    "clear"     -> new ClearAction[F],
+    "clear"     -> new ClearAction[F](imageViewer),
     "show"      -> new ShowAction[F](imageViewer),
     "hide"      -> new HideAction[F](imageViewer)
   )

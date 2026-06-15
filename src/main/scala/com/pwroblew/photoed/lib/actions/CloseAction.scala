@@ -4,7 +4,7 @@ import cats.MonadThrow
 import cats.data.OptionT
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
-class HideAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends EditorAction[F] {
+class CloseAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends EditorAction[F] {
 
   override def act(
       state: PhotoEdAppState,
@@ -12,7 +12,7 @@ class HideAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends Editor
   ): F[(Boolean, PhotoEdAppState)] = {
 
     val res: OptionT[F, (Boolean, PhotoEdAppState)] = for {
-      state <- OptionT.liftF(imageViewer.hide(state))
+      state <- OptionT.liftF(imageViewer.close(state))
     } yield (true, state)
 
     res.getOrRaise(new RuntimeException("Can't hide the window."))

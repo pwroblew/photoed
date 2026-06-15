@@ -10,7 +10,7 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorAction[F] {
 
   private val indent: String = " " * 4
 
-  override def run(
+  override def act(
       state: PhotoEdAppState,
       commandDetails: List[String]
   ): F[(Boolean, PhotoEdAppState)] = {

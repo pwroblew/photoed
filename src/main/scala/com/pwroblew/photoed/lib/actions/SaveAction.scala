@@ -7,7 +7,7 @@ import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
 class SaveAction[F[_]: MonadThrow](imageLoader: EdImageFiles[F]) extends EditorAction[F] {
 
-  override def run(
+  override def act(
       state: PhotoEdAppState,
       commandDetails: List[String]
   ): F[(Boolean, PhotoEdAppState)] = {

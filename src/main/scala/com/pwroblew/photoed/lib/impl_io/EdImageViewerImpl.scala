@@ -2,7 +2,7 @@ package com.pwroblew.photoed.lib.impl_io
 
 import cats.data.OptionT
 import cats.effect.IO
-import cats.implicits.catsSyntaxOptionId
+import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
 import com.pwroblew.photoed.lib.impl_io.EdImageJPanel
 import com.pwroblew.photoed.lib.{EdImage, EdImageViewer, PhotoEdAppState}
 
@@ -11,41 +11,59 @@ import javax.swing.{JFrame, WindowConstants}
 object EdImageViewerImpl extends EdImageViewer[IO] {
 
   override def show(appState: PhotoEdAppState)(edImage: EdImage): IO[PhotoEdAppState] = {
-    val swingUpdated: OptionT[IO, (JFrame, EdImageJPanel)] = for {
-      (jFrame, jPanel) <- (appState.isShowing, appState.swingComponents) match {
-                            case (false, None)              => OptionT.liftF(create("photoed"))
-                            case (true, Some(frame, panel)) =>
-                              OptionT.fromOption[IO](appState.swingComponents)
-                            case _                          => OptionT.liftF(
-                                IO.raiseError(new RuntimeException("Inconsistent app state"))
-                              )
-                          }
-      _                <- OptionT.liftF {
-                            onEDT {
-                              jPanel.replaceImage(edImage)
-                              jPanel.repaint()
-                              jFrame.pack()
-                              jFrame.setVisible(true)
+    if !appState.isShowing then IO.pure(appState)
+    else {
+      val swingUpdated: OptionT[IO, (JFrame, EdImageJPanel)] = for {
+        (jFrame, jPanel) <- appState.swingComponents match {
+                              case None    => OptionT.liftF(create("photoed"))
+                              case Some(_) => OptionT.fromOption[IO](appState.swingComponents)
                             }
-                          }
-    } yield (jFrame, jPanel)
+        _                <- OptionT.liftF {
+                              onEDT {
+                                jPanel.replaceImage(edImage)
+                                jPanel.repaint()
+                                jFrame.pack()
+                                jFrame.setVisible(true)
+                              }
+                            }
+      } yield (jFrame, jPanel)
 
-    swingUpdated
-      .getOrRaise(new RuntimeException("Couldn't show"))
-      .map(swingStuff => appState.copy(swingComponents = swingStuff.some, isShowing = true))
+      swingUpdated
+        .getOrRaise(new RuntimeException("Couldn't show"))
+        .map(swingStuff => appState.copy(swingComponents = swingStuff.some))
+    }
   }
 
   override def close(appState: PhotoEdAppState): IO[PhotoEdAppState] = {
-    val res: OptionT[IO, PhotoEdAppState] = for {
-      (jFrame, jPanel) <- OptionT.fromOption[IO](appState.swingComponents)
-      _                <- OptionT.liftF {
-                            onEDT {
-                              jFrame.dispose()
+    if appState.swingComponents.isEmpty then appState.pure[IO]
+    else {
+      val res: OptionT[IO, PhotoEdAppState] = for {
+        (jFrame, jPanel) <- OptionT.fromOption[IO](appState.swingComponents)
+        _                <- OptionT.liftF {
+                              onEDT {
+                                jFrame.dispose()
+                              }
                             }
-                          }
-    } yield appState.copy(isShowing = false, swingComponents = None)
+      } yield appState.copy(isShowing = false, swingComponents = None)
 
-    res.getOrRaise(new RuntimeException("Couldn't close the window."))
+      res.getOrRaise(new RuntimeException("Couldn't close the window."))
+    }
+  }
+
+  override def hide(appState: PhotoEdAppState): IO[PhotoEdAppState] = {
+    if appState.swingComponents.isEmpty then appState.pure[IO]
+    else {
+      val res: OptionT[IO, PhotoEdAppState] = for {
+        (jFrame, jPanel) <- OptionT.fromOption[IO](appState.swingComponents)
+        _                <- OptionT.liftF {
+                              onEDT {
+                                jFrame.setVisible(false)
+                              }
+                            }
+      } yield appState.copy(isShowing = false)
+
+      res.getOrRaise(new RuntimeException("Couldn't close the window."))
+    }
   }
 
   def create(name: String): IO[(jFrame: JFrame, imageJPanel: EdImageJPanel)] = {

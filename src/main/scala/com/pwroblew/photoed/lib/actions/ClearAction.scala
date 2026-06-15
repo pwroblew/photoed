@@ -1,12 +1,12 @@
 package com.pwroblew.photoed.lib.actions
 
-import cats.Applicative
+import cats.MonadThrow
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
-class ClearAction[F[_]: Applicative] extends EditorAction[F] {
+class ClearAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends EditorAction[F] {
 
-  override def run(
+  override def act(
       state: PhotoEdAppState,
       commandDetails: List[String]
   ): F[(Boolean, PhotoEdAppState)] = {
@@ -14,4 +14,5 @@ class ClearAction[F[_]: Applicative] extends EditorAction[F] {
     (true, PhotoEdAppState.initialState).pure[F]
   }
 
+  override def prev: EditorAction[F] = new CloseAction[F](imageViewer)
 }
