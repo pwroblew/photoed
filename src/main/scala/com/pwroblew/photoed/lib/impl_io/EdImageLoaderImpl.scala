@@ -13,7 +13,7 @@ import scala.util.matching.Regex
 
 object EdImageLoaderImpl extends EdImageLoader[IO] {
 
-  val FilenameRegex: Regex = raw".*\.([a-zA-Z]{2,4})".r
+  private val FilenameRegex: Regex = raw".*\.([a-zA-Z]{2,4})".r
 
   override def load(path: String): IO[EdImage] =
     IO.blocking(ImageIO.read(new File(path)))
