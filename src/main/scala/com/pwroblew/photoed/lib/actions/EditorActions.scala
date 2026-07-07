@@ -1,27 +1,32 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
+import cats.effect.Resource
 import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.transformations.simple.{Grayscale, Invert}
 import com.pwroblew.photoed.lib.{EdImageFiles, EdImageViewer}
 
 object EditorActions {
-  def actions[F[_]: {MonadThrow,
-    Console}](
-      imageLoader: EdImageFiles[F],
-      imageViewer: EdImageViewer[F]
-  ): Map[String, EditorAction[F]]      = Map(
-    "load"      -> new LoadAction[F](imageLoader, imageViewer),
-    "load-res"  -> new LoadResAction[F](imageLoader, imageViewer),
+  def basicActions[F[_]: {MonadThrow,
+    Console}](imageLoader: EdImageFiles[F]): Map[String, EditorActionBasic[F]]      = Map(
+    "load"      -> new LoadAction[F](imageLoader),
+    "load-res"  -> new LoadResAction[F](imageLoader),
     "save"      -> new SaveAction[F](imageLoader),
     "save-res"  -> new SaveResAction[F](imageLoader),
-    "exit"      -> new ExitAction[F](imageViewer),
-    "invert"    -> new TransformAction[F](Invert, imageViewer),
-    "grayscale" -> new TransformAction[F](Grayscale, imageViewer),
+    "exit"      -> new ExitAction[F](),
+    "invert"    -> new TransformAction[F](Invert),
+    "grayscale" -> new TransformAction[F](Grayscale),
     "status"    -> new StatusAction[F],
-    "clear"     -> new ClearAction[F](imageViewer),
-    "show"      -> new ShowAction[F](imageViewer),
-    "hide"      -> new HideAction[F](imageViewer)
+    "clear"     -> new ClearAction[F]()
   )
+
+  def showingActions[F[_]: {MonadThrow, Console}]: Map[String, EditorActionShowable[F]] = Map(
+    "show" -> new ShowAction[F](),
+    "hide" -> new HideAction[F]()
+  )
+
+  def allActions[F[_]: {MonadThrow,
+    Console}](imageLoader: EdImageFiles[F]): Map[String, EditorActionShowable[F]] =
+    basicActions(imageLoader) ++ showingActions
 
 }

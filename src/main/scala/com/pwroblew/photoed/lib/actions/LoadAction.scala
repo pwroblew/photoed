@@ -1,36 +1,42 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
+import cats.effect.{Ref, Resource}
+import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.actions.LoadAction.loadImage
 import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, EdImageViewer, PhotoEdAppState}
 
-class LoadAction[F[_]: MonadThrow](imageLoader: EdImageFiles[F], imageViewer: EdImageViewer[F])
-    extends EditorAction[F] {
+class LoadAction[F[_]: MonadThrow: Console](
+    imageLoader: EdImageFiles[F]
+) extends EditorActionBasic[F] {
 
-  override def act(
-      state: PhotoEdAppState,
+  override def actB(
+      state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[(Boolean, PhotoEdAppState)] = {
+  ): F[Unit] = {
     val path: Option[String] = commandDetails.drop(1).headOption
     loadImage(imageLoader.load)(path)(state)
   }
 
-  override def next: EditorAction[F] = new ShowAction[F](imageViewer)
+  override def next: EditorActionShowable[F] = new ShowAction[F]()
 
 }
 
 object LoadAction {
   def loadImage[F[_]: MonadThrow](edImageLoader: String => F[EdImage])(path: Option[String])(
-      appState: PhotoEdAppState
+      appState: Ref[F, PhotoEdAppState]
   )
-      : F[(Boolean, PhotoEdAppState)] = {
+      : F[Unit] = {
     for {
       imageLoaded <- path.traverse(edImageLoader(_))
-      newState    <- appState.copy(
-                       stateStatus = List(s"[loaded: $path]"),
-                       edImage = imageLoaded
-                     ).pure[F]
-    } yield (true, newState)
+      _           <- appState.update(state =>
+                       state.copy(
+                         history = List(s"[loaded: $path]"),
+                         edImage = imageLoaded,
+                         toBeContinued = true
+                       )
+                     )
+    } yield ()
   }
 }

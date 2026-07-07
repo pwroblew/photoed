@@ -5,18 +5,20 @@ import com.pwroblew.photoed.lib.impl_io.EdImageJPanel
 import javax.swing.JFrame
 
 case class PhotoEdAppState(
-    stateStatus: List[String],
+    history: List[String],
     edImage: Option[EdImage],
-    swingComponents: Option[(jFrame: JFrame, imageJPanel: EdImageJPanel)],
-    isShowing: Boolean
+    isShowing: Boolean,
+    toBeContinued: Boolean,
+    toBeShowed: Boolean
 )
 
 object PhotoEdAppState {
   private val empty: PhotoEdAppState = PhotoEdAppState(
-    stateStatus = List.empty,
+    history = List.empty,
     edImage = Option.empty,
-    swingComponents = None,
-    isShowing = false
+    isShowing = false,
+    toBeContinued = true,
+    toBeShowed = false
   )
   def initialState: PhotoEdAppState  = empty
 }

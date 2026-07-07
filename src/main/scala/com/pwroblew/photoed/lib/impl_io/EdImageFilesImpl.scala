@@ -2,7 +2,7 @@ package com.pwroblew.photoed.lib.impl_io
 
 import cats.effect.IO
 import cats.implicits.catsSyntaxEq
-import cats.syntax.all.catsSyntaxEitherId
+import cats.syntax.all.*
 import com.pwroblew.photoed.lib.{EdImage, EdImageFiles}
 
 import java.awt.image.BufferedImage

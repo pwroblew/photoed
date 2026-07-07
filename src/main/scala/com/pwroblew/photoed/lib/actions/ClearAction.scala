@@ -1,18 +1,16 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
-import cats.syntax.all.*
+import cats.effect.{Ref, Resource}
+import cats.effect.std.Console
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
-class ClearAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends EditorAction[F] {
+class ClearAction[F[_]: MonadThrow: Console] extends EditorActionBasic[F] {
 
-  override def act(
-      state: PhotoEdAppState,
+  override def actB(
+      state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[(Boolean, PhotoEdAppState)] = {
+  ): F[Unit] = state.set(PhotoEdAppState.initialState)
 
-    (true, PhotoEdAppState.initialState).pure[F]
-  }
-
-  override def prev: EditorAction[F] = new CloseAction[F](imageViewer)
+  override def prevB: EditorActionBasic[F] = new CloseAction[F]()
 }

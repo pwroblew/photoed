@@ -1,22 +1,22 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
-import cats.implicits.catsSyntaxApplicativeId
+import cats.effect.{Ref, Resource}
+import cats.effect.std.Console
+import cats.syntax.all.*
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
-class ShowAction[F[_]: MonadThrow](imageViewer: EdImageViewer[F]) extends EditorAction[F] {
+class ShowAction[F[_]: MonadThrow: Console] extends EditorActionBasic[F] {
 
-  override def act(
-      state: PhotoEdAppState,
+  override def actB(
+      appState: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[(Boolean, PhotoEdAppState)] =
+  ): F[Unit] = appState.update(state =>
+    state.copy(
+      isShowing = true,
+      toBeShowed = true
+    )
+  )
 
-    (state.isShowing, state.swingComponents) match {
-      case (true, Some(_)) => (true, state).pure[F]
-      case (false, _)      => (true, state.copy(isShowing = true)).pure[F]
-      case (true, None)    =>
-        MonadThrow[F].raiseError(new RuntimeException("invalid application state"))
-    }
-
-  override def next: EditorAction[F] = new DisplayAction[F](imageViewer)
+  override def next: EditorActionShowable[F] = new DisplayAction[F]()
 }

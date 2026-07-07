@@ -2,15 +2,19 @@ package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
 import cats.data.OptionT
+import cats.effect.Ref
+import cats.syntax.all.*
+import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.SaveAction.saveImage
 import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
-class SaveAction[F[_]: MonadThrow](imageLoader: EdImageFiles[F]) extends EditorAction[F] {
+class SaveAction[F[_]: MonadThrow: Console](imageLoader: EdImageFiles[F])
+    extends EditorActionBasic[F] {
 
-  override def act(
-      state: PhotoEdAppState,
+  override def actB(
+      state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[(Boolean, PhotoEdAppState)] = {
+  ): F[Unit] = {
     val maybePath: Option[String] = commandDetails.drop(1).headOption
     saveImage(imageLoader.save)(state, maybePath)
   }
@@ -18,25 +22,26 @@ class SaveAction[F[_]: MonadThrow](imageLoader: EdImageFiles[F]) extends EditorA
 
 object SaveAction {
   def saveImage[F[_]: MonadThrow](imageSaver: (EdImage, String) => F[Unit])(
-      state: PhotoEdAppState,
+      appState: Ref[F, PhotoEdAppState],
       maybePath: Option[String]
-  ): F[(Boolean, PhotoEdAppState)] = {
+  ): F[Unit] = {
 
-    val maybeImage: Option[EdImage] = state.edImage
-
-    val res: OptionT[F, (Boolean, PhotoEdAppState)] = for {
+    val res: OptionT[F, Unit] = for {
+      image <- OptionT(appState.get.map(_.edImage))
       path  <- OptionT.fromOption[F](maybePath)
-      image <- OptionT.fromOption[F](maybeImage)
       _     <- OptionT.liftF(imageSaver(image, path))
-    } yield {
-      val newState: PhotoEdAppState = state.copy(
-        stateStatus = state.stateStatus :+ s"[saved to: $path]"
-      )
-      (true, newState)
-    }
+      _     <- OptionT.liftF(appState.update(state =>
+                 state.copy(
+                   history = state.history :+ s"[saved to: $path]",
+                   toBeContinued = true
+                 )
+               ))
+    } yield ()
 
     res.getOrRaise(
-      new IllegalArgumentException(s"Invalid arguments for saving the image. Path: [$maybePath]")
+      new IllegalArgumentException(
+        s"Invalid arguments for saving the image. Path: [$maybePath] or image not loaded."
+      )
     )
   }
 
