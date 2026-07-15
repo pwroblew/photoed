@@ -1,10 +1,16 @@
 package com.pwroblew.photoed
 
 import cats.effect.{IO, IOApp, Ref, Resource}
-import cats.implicits.catsSyntaxApplicativeId
+import cats.implicits.catsSyntaxOptionId
 import com.pwroblew.photoed.lib.impl_f.PhotoEdAppImpl
 import com.pwroblew.photoed.lib.impl_io.{EdImageFilesImpl, EdImageViewerImpl}
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{
+  EdImageViewer,
+  PhotoEdAppState,
+  TO_BE_CONTINUED,
+  TO_BE_CONTINUED_BUT_NOT_SHOWN,
+  TO_BE_SHOWN
+}
 
 object StatefulCLI extends IOApp.Simple {
 
@@ -12,41 +18,26 @@ object StatefulCLI extends IOApp.Simple {
 
   override def run: IO[Unit] = for {
     appState <- IO.ref(PhotoEdAppState.initialState)
-    _        <- basicAppLoop(appState)
-                  .whileM_(appState.get.map(_.toBeContinued))
+    _        <- basicAppLoop(appState).whileM_(TO_BE_CONTINUED(appState))
   } yield ()
 
   private def basicAppLoop(appState: Ref[IO, PhotoEdAppState]): IO[Unit] =
     for {
-      _          <- basicAppStep(appState)
-                      .whileM_(appState.get.map(state => state.toBeContinued && !state.toBeShowed))
-      toBeShowed <- appState.get.map(_.toBeShowed)
-      _          <- if (toBeShowed)
-                      EdImageViewerImpl.makeResource("photoed").use(showingAppLoop(appState, _))
-                    else IO.unit
+      _         <- nextAppStep(appState, None).whileM_(TO_BE_CONTINUED_BUT_NOT_SHOWN(appState))
+      toBeShown <- appState.get.map(_.toBeShown)
+      _         <- if (toBeShown) EdImageViewerImpl.makeResource("photoed").use { viewer =>
+                     nextAppStep(appState, viewer.some).whileM_(TO_BE_SHOWN(appState))
+                   }
+                   else IO.unit
     } yield ()
 
-  private def basicAppStep(appState: Ref[IO, PhotoEdAppState]): IO[Unit] =
-    for {
-      command <- app.readCommand()
-      _       <- app.basicStep(command, appState).handleErrorWith(e => IO.println(e.getMessage))
-    } yield ()
-
-  private def showingAppLoop(
+  private def nextAppStep(
       appState: Ref[IO, PhotoEdAppState],
-      imageViewer: EdImageViewer[IO]
-  ): IO[Unit] = {
-    showingAppStep(appState, imageViewer)
-      .whileM_(appState.get.map(state => state.toBeContinued || state.toBeShowed))
-  }
-
-  private def showingAppStep(
-      appState: Ref[IO, PhotoEdAppState],
-      imageViewer: EdImageViewer[IO]
+      maybeImageViewer: Option[EdImageViewer[IO]]
   ): IO[Unit] = for {
-    command <- app.readCommand()
-    _       <- app.showingStep(command, appState, imageViewer)
-                 .handleErrorWith(e => IO.println(e.getMessage))
+    cmd <- app.readCommand()
+    _   <- app.nextStep(cmd, appState, maybeImageViewer)
+             .handleErrorWith(e => IO.println(e.getMessage))
   } yield ()
 
 }

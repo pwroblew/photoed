@@ -13,45 +13,44 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
     private val imageLoader: EdImageFiles[F]
 ) extends PhotoEdApp[F] {
 
-  override def basicStep(
+  override def nextStep(
       command: String,
-      appState: Ref[F, PhotoEdAppState]
+      appState: Ref[F, PhotoEdAppState],
+      maybeImageViewer: Option[EdImageViewer[F]]
   ): F[Unit] = {
 
-    val commandDetails: List[String]               = command.trim.split("\\s+", 2).toList
-    val actions: Map[String, EditorActionBasic[F]] = EditorActions.basicActions(imageLoader)
+    val commandDetails: List[String] = command.trim.split("\\s+", 2).toList
 
-    for {
-      action <-
-        OptionT.fromOption[F](commandDetails.headOption)
-          .subflatMap(actions.get)
-          .getOrRaise(new IllegalArgumentException(
-            s"Error: Unsupported image processing command provided: \"$command\". Please provide \"exit\" to exit the app."
-          ))
-      _      <- action.runB(appState, commandDetails)
-    } yield ()
+    maybeImageViewer.fold {
+
+      val getAction: String => Option[EditorActionBasic[F]] =
+        EditorActions.basicActions(imageLoader).get
+      for {
+        action <- getCommandActionF(command, commandDetails, getAction)
+        _      <- action.runB(appState, commandDetails)
+      } yield ()
+
+    } { imageViewer =>
+      val getAction: String => Option[EditorActionShowable[F]] =
+        EditorActions.allActions(imageLoader).get
+      for {
+        action <- getCommandActionF(command, commandDetails, getAction)
+        _      <- action.run(appState, commandDetails, imageViewer)
+      } yield ()
+    }
 
   }
 
-  override def showingStep(
+  private def getCommandActionF[EdAction[_[_]]](
       command: String,
-      appState: Ref[F, PhotoEdAppState],
-      imageViewer: EdImageViewer[F]
-  ): F[Unit] = {
-
-    val commandDetails: List[String]                  = command.trim.split("\\s+", 2).toList
-    val actions: Map[String, EditorActionShowable[F]] = EditorActions.allActions(imageLoader)
-
-    for {
-      action <-
-        OptionT.fromOption[F](commandDetails.headOption)
-          .subflatMap(actions.get)
-          .getOrRaise(new IllegalArgumentException(
-            s"Error: Unsupported image processing command provided: \"$command\". Please provide \"exit\" to exit the app."
-          ))
-      _      <- action.run(appState, commandDetails, imageViewer)
-    } yield ()
-
+      commandDetails: List[String],
+      getAction: String => Option[EdAction[F]]
+  ): F[EdAction[F]] = {
+    OptionT.fromOption[F](commandDetails.headOption)
+      .subflatMap(getAction)
+      .getOrRaise(new IllegalArgumentException(
+        s"Error: Unsupported image processing command provided: \"$command\". Please provide \"exit\" to exit the app."
+      ))
   }
 
   override def readCommand(): F[String] =

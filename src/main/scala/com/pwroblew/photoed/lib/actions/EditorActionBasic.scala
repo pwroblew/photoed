@@ -7,7 +7,7 @@ import cats.effect.std.Console
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 import com.pwroblew.photoed.lib.actions.EditorActionBasic.emptyActionB
 
-trait EditorActionBasic[F[_]: MonadThrow: Console] extends EditorActionShowable[F] {
+trait EditorActionBasic[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
   override def act(
       state: Ref[F, PhotoEdAppState],

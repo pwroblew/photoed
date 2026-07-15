@@ -11,6 +11,6 @@ class CloseAction[F[_]: MonadThrow: Console] extends EditorActionBasic[F] {
   override def actB(
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[Unit] = state.update(_.copy(toBeShowed = false))
+  ): F[Unit] = state.update(_.copy(toBeShown = false))
 
 }

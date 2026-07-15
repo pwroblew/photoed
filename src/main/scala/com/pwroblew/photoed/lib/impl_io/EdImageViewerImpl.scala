@@ -37,7 +37,7 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
       _ <- onEDT {
              jFrame.dispose()
            }
-      _ <- appState.update(_.copy(isShowing = false, toBeShowed = false))
+      _ <- appState.update(_.copy(isShowing = false, toBeShown = false))
     } yield ()
   }
 

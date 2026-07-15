@@ -14,7 +14,7 @@ class ShowAction[F[_]: MonadThrow: Console] extends EditorActionBasic[F] {
   ): F[Unit] = appState.update(state =>
     state.copy(
       isShowing = true,
-      toBeShowed = true
+      toBeShown = true
     )
   )
 
