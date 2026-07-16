@@ -9,13 +9,21 @@ import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 class ClearAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState],
+      stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
   ): F[AdditionalActions] = {
     val headCommand: String = commandDetails.head // TODO consider headOption
     headCommand match {
       case "clear"    => AdditionalActions(List("close", "clearRaw"), List.empty[String]).pure[F]
-      case "clearRaw" => state.set(PhotoEdAppState.initialState) >> AdditionalActions.empty.pure[F]
+      case "clearRaw" => stateRef.update(state =>
+          state.copy(
+            edImage = Option.empty,
+            isShowing = false,
+            toBeContinued = true,
+            toBeShown = false
+          )
+        )
+          >> AdditionalActions.empty.pure[F]
     }
   }
 

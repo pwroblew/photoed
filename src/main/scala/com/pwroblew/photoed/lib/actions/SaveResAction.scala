@@ -11,7 +11,7 @@ class SaveResAction[F[_]: {MonadThrow, Console}](imageLoader: EdImageFiles[F])
     extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
   ): F[AdditionalActions] = {
     val maybePath: Option[String] = commandDetails.drop(1).headOption.map("src/main/resources/" + _)

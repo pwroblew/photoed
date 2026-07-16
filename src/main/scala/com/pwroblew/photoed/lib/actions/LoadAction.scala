@@ -1,45 +1,61 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
-import cats.effect.{Ref, Resource}
+import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.actions.LoadAction.loadImage
-import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, EdImageViewer, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
 class LoadAction[F[_]: {MonadThrow, Console}](
     imageLoader: EdImageFiles[F]
 ) extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
   ): F[AdditionalActions] = {
-    val path: Option[String] = commandDetails.drop(1).headOption
-    loadImage(imageLoader.load)(path)(state) >> AdditionalActions(
-      List.empty[String],
-      List("show")
-    ).pure[F]
+
+    if commandDetails.length != 3 then {
+      val exception = new IllegalArgumentException(s"syntax: load <filename> <img-id>")
+      exception.raiseError[F, AdditionalActions]
+    } else {
+
+      val cmd: String      = commandDetails.head
+      val pathBase: String = commandDetails(1)
+      val imageId: String  = commandDetails(2)
+
+      val path: String = cmd match {
+        case "load"     => pathBase
+        case "load-res" => s"src/main/resources/$pathBase"
+      }
+
+      loadImage(imageLoader.load)(path, imageId)(state)
+        >> AdditionalActions(List.empty[String], List("show")).pure[F]
+    }
   }
 
-  override def keywords: List[String] = List("load")
+  override def keywords: List[String] = List("load", "load-res")
 }
 
 object LoadAction {
   def apply[F[_]: {MonadThrow, Console}](using imageLoader: EdImageFiles[F]): LoadAction[F] =
     new LoadAction(imageLoader)
 
-  def loadImage[F[_]: MonadThrow](edImageLoader: String => F[EdImage])(path: Option[String])(
-      appState: Ref[F, PhotoEdAppState]
+  def loadImage[F[_]: MonadThrow](edImageLoader: String => F[EdImage])(
+      path: String,
+      imageId: String
+  )(
+      appState: Ref[F, PhotoEdAppState[F]]
   )
       : F[Unit] = {
     for {
-      imageLoaded <- path.traverse(edImageLoader(_))
+      imageLoaded <- edImageLoader(path)
       _           <- appState.update(state =>
                        state.copy(
-                         history = List(s"[loaded: $path]"),
-                         edImage = imageLoaded,
-                         toBeContinued = true
+                         history = state.history :+ s"[loaded: $path]",
+                         edImage = imageLoaded.some,
+                         imageId = imageId.some
                        )
                      )
     } yield ()

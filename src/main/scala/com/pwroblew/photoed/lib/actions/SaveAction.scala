@@ -12,7 +12,7 @@ class SaveAction[F[_]: {MonadThrow, Console}](imageLoader: EdImageFiles[F])
     extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
   ): F[AdditionalActions] = {
     val maybePath: Option[String] = commandDetails.drop(1).headOption
@@ -28,7 +28,7 @@ object SaveAction {
     new SaveAction(imageLoader)
 
   def saveImage[F[_]: MonadThrow](imageSaver: (EdImage, String) => F[Unit])(
-      appState: Ref[F, PhotoEdAppState],
+      appState: Ref[F, PhotoEdAppState[F]],
       maybePath: Option[String]
   ): F[Unit] = {
 
@@ -38,7 +38,6 @@ object SaveAction {
       _     <- OptionT.liftF(imageSaver(image, path))
       _     <- OptionT.liftF(appState.update(state =>
                  state.copy(
-                   history = state.history :+ s"[saved to: $path]",
                    toBeContinued = true
                  )
                ))

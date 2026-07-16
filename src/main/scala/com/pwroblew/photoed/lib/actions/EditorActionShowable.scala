@@ -5,6 +5,7 @@ import cats.effect.Ref
 import cats.syntax.all.*
 import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.EditorActionShowable.emptyAction
+import com.pwroblew.photoed.lib.impl_f.WindowHandle
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
 case class AdditionalActions(preActions: List[String], postActions: List[String])
@@ -15,9 +16,9 @@ object AdditionalActions {
 trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
 
   def act(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
-      imageViewer: EdImageViewer[F]
+      windowHandle: WindowHandle[F]
   ): F[AdditionalActions]
 
   def keywords: List[String]
@@ -29,9 +30,9 @@ object EditorActionShowable {
     new EditorActionShowable[F] {
 
       override def act(
-          state: Ref[F, PhotoEdAppState],
+          state: Ref[F, PhotoEdAppState[F]],
           commandDetails: List[String],
-          imageViewer: EdImageViewer[F]
+          windowHandle: WindowHandle[F]
       ): F[AdditionalActions] = AdditionalActions(List.empty[String], List.empty[String]).pure[F]
 
       override def keywords: List[String] = List.empty[String]

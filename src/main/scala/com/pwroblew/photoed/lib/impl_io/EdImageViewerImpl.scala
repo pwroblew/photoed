@@ -12,7 +12,7 @@ import javax.swing.{JFrame, WindowConstants}
 class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdImageJPanel)
     extends EdImageViewer[IO] {
 
-  override def show(appState: Ref[IO, PhotoEdAppState])(edImage: EdImage): IO[Unit] = {
+  override def show(appState: Ref[IO, PhotoEdAppState[IO]])(edImage: EdImage): IO[Unit] = {
 
     for {
       isShowing <- appState.get.map(_.isShowing)
@@ -32,7 +32,7 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
 
   }
 
-  override def close(appState: Ref[IO, PhotoEdAppState]): IO[Unit] = {
+  override def close(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] = {
     for {
       _ <- onEDT {
              jFrame.dispose()
@@ -41,7 +41,7 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
     } yield ()
   }
 
-  override def hide(appState: Ref[IO, PhotoEdAppState]): IO[Unit] =
+  override def hide(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] =
     for {
       _ <- onEDT {
              jFrame.setVisible(false)

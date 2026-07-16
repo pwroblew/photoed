@@ -5,19 +5,21 @@ import cats.data.OptionT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
+import com.pwroblew.photoed.lib.impl_f.WindowHandle
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
 class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
   override def act(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
-      imageViewer: EdImageViewer[F]
+      windowHandle: WindowHandle[F]
   ): F[AdditionalActions] = {
 
     val res: OptionT[F, Unit] = for {
-      image <- OptionT(state.get.map(_.edImage))
-      state <- OptionT.liftF(imageViewer.show(state)(image))
+      image        <- OptionT(state.get.map(_.edImage))
+      viewerWindow <- OptionT(windowHandle.windowRef.get)
+      _            <- OptionT.liftF(viewerWindow.viewer.show(state)(image))
     } yield ()
 
     res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded"))
