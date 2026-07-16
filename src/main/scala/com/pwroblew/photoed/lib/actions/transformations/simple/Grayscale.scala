@@ -9,4 +9,6 @@ object Grayscale extends SimpleTransformation {
     val grayed: Int  = (pixel.getR + pixel.getG + pixel.getB) / 3
     Pixel.create(grayed, grayed, grayed).value
   }
+
+  override def keywords: List[String] = List("greyscale", "grayscale")
 }

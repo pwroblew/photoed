@@ -8,19 +8,25 @@ import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.SaveAction.saveImage
 import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
 
-class SaveAction[F[_]: MonadThrow: Console](imageLoader: EdImageFiles[F])
+class SaveAction[F[_]: {MonadThrow, Console}](imageLoader: EdImageFiles[F])
     extends EditorActionBasic[F] {
 
   override def actB(
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[Unit] = {
+  ): F[AdditionalActions] = {
     val maybePath: Option[String] = commandDetails.drop(1).headOption
-    saveImage(imageLoader.save)(state, maybePath)
+    saveImage(imageLoader.save)(state, maybePath) >> AdditionalActions.empty.pure[F]
   }
+
+  override def keywords: List[String] = List("save")
 }
 
 object SaveAction {
+
+  def apply[F[_]: {MonadThrow, Console}](using imageLoader: EdImageFiles[F]): SaveAction[F] =
+    new SaveAction(imageLoader)
+
   def saveImage[F[_]: MonadThrow](imageSaver: (EdImage, String) => F[Unit])(
       appState: Ref[F, PhotoEdAppState],
       maybePath: Option[String]

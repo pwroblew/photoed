@@ -8,7 +8,8 @@ import com.pwroblew.photoed.lib.impl_io.{EdImageFilesImpl, EdImageViewerImpl}
 
 object StatefulCLI extends IOApp.Simple {
 
-  val app = PhotoEdAppImpl[IO](EdImageFilesImpl)
+  val imageFiles: EdImageFiles[IO] = EdImageFilesImpl
+  val app                          = PhotoEdAppImpl[IO](imageFiles)
 
   override def run: IO[Unit] = for {
     appState <- IO.ref(PhotoEdAppState.initialState)
@@ -32,9 +33,9 @@ object StatefulCLI extends IOApp.Simple {
       appState: Ref[IO, PhotoEdAppState],
       maybeImageViewer: Option[EdImageViewer[IO]]
   ): IO[Unit] = for {
-    cmd <- app.readCommand()
-    _   <- app.nextStep(cmd, appState, maybeImageViewer)
-             .handleErrorWith(e => IO.println(e.getMessage))
+    _ <- app.readCommand(appState)
+    _ <- app.nextStep(appState, maybeImageViewer).whileM_(appState.get.map(_.commands.nonEmpty))
+           .handleErrorWith(e => IO.println(e.getMessage))
   } yield ()
 
 }

@@ -6,17 +6,21 @@ import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
-class ShowAction[F[_]: MonadThrow: Console] extends EditorActionBasic[F] {
+class ShowAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
 
   override def actB(
       appState: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[Unit] = appState.update(state =>
+  ): F[AdditionalActions] = appState.update(state =>
     state.copy(
       isShowing = true,
       toBeShown = true
     )
-  )
+  ) >> AdditionalActions(List.empty[String], List("display")).pure[F]
 
-  override def next: EditorActionShowable[F] = new DisplayAction[F]()
+  override def keywords: List[String] = List("show")
+}
+
+object ShowAction {
+  def apply[F[_]: {MonadThrow, Console}]: ShowAction[F] = new ShowAction()
 }

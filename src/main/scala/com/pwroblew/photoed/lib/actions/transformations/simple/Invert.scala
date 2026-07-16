@@ -15,4 +15,6 @@ object Invert extends SimpleTransformation {
     Pixel.create(newR, newG, newB).value
 
   }
+
+  override def keywords: List[String] = List("invert")
 }

@@ -7,45 +7,33 @@ import cats.effect.std.Console
 import com.pwroblew.photoed.lib.actions.EditorActionShowable.emptyAction
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
+case class AdditionalActions(preActions: List[String], postActions: List[String])
+object AdditionalActions {
+  def empty: AdditionalActions = AdditionalActions(List.empty[String], List.empty[String])
+}
+
 trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
 
   def act(
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String],
       imageViewer: EdImageViewer[F]
-  ): F[Unit]
+  ): F[AdditionalActions]
 
-  def run(
-      state: Ref[F, PhotoEdAppState],
-      commandDetails: List[String],
-      imageViewer: EdImageViewer[F]
-  ): F[Unit] =
-    for {
-      _ <- prev.run(state, commandDetails, imageViewer)
-      _ <- act(state, commandDetails, imageViewer)
-      _ <- next.run(state, commandDetails, imageViewer)
-    } yield ()
-
-  def next: EditorActionShowable[F] = emptyAction
-  def prev: EditorActionShowable[F] = emptyAction
+  def keywords: List[String]
 
 }
 
 object EditorActionShowable {
-  def emptyAction[F[_]: MonadThrow: Console]: EditorActionShowable[F] =
+  def emptyAction[F[_]: {MonadThrow, Console}]: EditorActionShowable[F] =
     new EditorActionShowable[F] {
 
       override def act(
           state: Ref[F, PhotoEdAppState],
           commandDetails: List[String],
           imageViewer: EdImageViewer[F]
-      ): F[Unit] = ().pure[F]
+      ): F[AdditionalActions] = AdditionalActions(List.empty[String], List.empty[String]).pure[F]
 
-      override def run(
-          state: Ref[F, PhotoEdAppState],
-          commandDetails: List[String],
-          imageViewer: EdImageViewer[F]
-      ): F[Unit] = act(state, commandDetails, imageViewer)
-
+      override def keywords: List[String] = List.empty[String]
     }
 }

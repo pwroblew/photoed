@@ -3,6 +3,8 @@ package com.pwroblew.photoed.lib.actions
 import cats.MonadThrow
 import cats.effect.{Ref, Resource}
 import cats.effect.std.Console
+import cats.syntax.all._
+import cats.implicits.catsSyntaxFlatMapOps
 import com.pwroblew.photoed.lib.actions.transformations.EdImageTransformation
 import com.pwroblew.photoed.lib.{EdImage, EdImageViewer, PhotoEdAppState}
 
@@ -13,14 +15,13 @@ class TransformAction[F[_]: {MonadThrow,
   override def actB(
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[Unit] = state.update { st =>
+  ): F[AdditionalActions] = state.update { st =>
     st.copy(
       history = st.history :+ s"[${transformation.description}]",
       edImage = st.edImage.map(transformation.transform),
       toBeContinued = true
     )
-  }
+  } >> AdditionalActions(List.empty[String], List("display")).pure[F]
 
-  override def next: EditorActionShowable[F] = new DisplayAction[F]()
-
+  override def keywords: List[String] = transformation.keywords
 }

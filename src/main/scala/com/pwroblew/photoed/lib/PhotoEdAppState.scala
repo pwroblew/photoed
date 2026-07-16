@@ -6,6 +6,7 @@ import cats.syntax.functor.*
 
 case class PhotoEdAppState(
     history: List[String],
+    commands: List[String],
     edImage: Option[EdImage],
     isShowing: Boolean,
     toBeContinued: Boolean,
@@ -24,6 +25,7 @@ def TO_BE_SHOWN[F[_]: Functor](appState: Ref[F, PhotoEdAppState]): F[Boolean] =
 object PhotoEdAppState {
   private val empty: PhotoEdAppState = PhotoEdAppState(
     history = List.empty,
+    commands = List.empty,
     edImage = Option.empty,
     isShowing = false,
     toBeContinued = true,

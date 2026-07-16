@@ -10,32 +10,50 @@ import com.pwroblew.photoed.lib.*
 import com.pwroblew.photoed.lib.actions.*
 
 final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
-    private val imageLoader: EdImageFiles[F]
+    private val imageFiles: EdImageFiles[F]
 ) extends PhotoEdApp[F] {
 
   override def nextStep(
-      command: String,
       appState: Ref[F, PhotoEdAppState],
       maybeImageViewer: Option[EdImageViewer[F]]
   ): F[Unit] = {
 
-    val commandDetails: List[String] = command.trim.split("\\s+", 2).toList
-
     maybeImageViewer.fold {
 
+      given EdImageFiles[F]                                 = imageFiles
       val getAction: String => Option[EditorActionBasic[F]] =
-        EditorActions.basicActions(imageLoader).get
+        EditorActions.basicActionsMap[F].get
+
       for {
-        action <- getCommandActionF(command, commandDetails, getAction)
-        _      <- action.runB(appState, commandDetails)
+        cmdLine           <- appState.get.map(_.commands.head) // TODO consider headOption
+        commandDetails     = cmdLine.trim.split("\\s+", 2).toList
+        action            <- getCommandActionF(cmdLine, commandDetails, getAction)
+        additionalActions <- action.actB(appState, commandDetails)
+        _                 <-
+          appState.update(state =>
+            state.copy(commands =
+              additionalActions.preActions ::: state.commands.tail ::: additionalActions.postActions
+            )
+          )
+
       } yield ()
 
     } { imageViewer =>
+      given EdImageFiles[F]                                    = imageFiles
       val getAction: String => Option[EditorActionShowable[F]] =
-        EditorActions.allActions(imageLoader).get
+        EditorActions.allActionsMap[F].get
+
       for {
-        action <- getCommandActionF(command, commandDetails, getAction)
-        _      <- action.run(appState, commandDetails, imageViewer)
+        cmdLine           <- appState.get.map(_.commands.head) // TODO consider headOption
+        commandDetails     = cmdLine.trim.split("\\s+", 2).toList
+        action            <- getCommandActionF(cmdLine, commandDetails, getAction)
+        additionalActions <- action.act(appState, commandDetails, imageViewer)
+        _                 <-
+          appState.update(state =>
+            state.copy(commands =
+              additionalActions.preActions ::: state.commands.tail ::: additionalActions.postActions
+            )
+          )
       } yield ()
     }
 
@@ -53,8 +71,15 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console}](
       ))
   }
 
-  override def readCommand(): F[String] =
-    Console[F].print("Please provide a command: ") >> Console[F].readLine
+  override def readCommand(appState: Ref[F, PhotoEdAppState]): F[Unit] =
+    for {
+      _       <- Console[F].print("Please provide a command: ")
+      cmdLine <- Console[F].readLine
+      _       <- appState.update { state =>
+                   state.copy(commands = state.commands :+ cmdLine)
+                 }
+    } yield ()
+
 }
 
 object PhotoEdAppImpl {

@@ -14,7 +14,7 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
   override def actB(
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String]
-  ): F[Unit] = {
+  ): F[AdditionalActions] = {
 
     val res: EitherT[F, RuntimeException, Unit] = for {
       status <- EitherT(state.get.map(_.history).map(status =>
@@ -27,7 +27,8 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
       _      <- EitherT.liftF(state.update(_.copy(toBeContinued = true)))
     } yield ()
 
-    res.rethrowT
+    res.rethrowT >> AdditionalActions.empty.pure[F]
   }
 
+  override def keywords: List[String] = List("status")
 }

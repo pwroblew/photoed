@@ -13,13 +13,20 @@ class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F]
       state: Ref[F, PhotoEdAppState],
       commandDetails: List[String],
       imageViewer: EdImageViewer[F]
-  ): F[Unit] = {
+  ): F[AdditionalActions] = {
 
     val res: OptionT[F, Unit] = for {
       image <- OptionT(state.get.map(_.edImage))
       state <- OptionT.liftF(imageViewer.show(state)(image))
     } yield ()
 
-    res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded")).void
+    res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded"))
+      >> AdditionalActions.empty.pure[F]
   }
+
+  override def keywords: List[String] = List("display")
+}
+
+object DisplayAction {
+  def apply[F[_]: {MonadThrow, Console}]: DisplayAction[F] = new DisplayAction[F]()
 }
