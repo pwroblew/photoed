@@ -1,21 +1,19 @@
 package com.pwroblew.photoed.lib.impl_io
 
-import cats.data.OptionT
 import cats.effect.{IO, Ref, Resource}
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
 import com.pwroblew.photoed.lib.impl_io.EdImageJPanel
-import com.pwroblew.photoed.lib.impl_io.EdImageViewerImpl.{makeResource, onEDT}
-import com.pwroblew.photoed.lib.{EdImage, EdImageViewer, PhotoEdAppState}
+import com.pwroblew.photoed.lib.impl_io.ImageWindowImpl.onEDT
+import com.pwroblew.photoed.lib.{Image, ImageWindow, PhotoEdAppState}
 
 import javax.swing.{JFrame, WindowConstants}
 
-class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdImageJPanel)
-    extends EdImageViewer[IO] {
+class ImageWindowImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdImageJPanel)
+    extends ImageWindow[IO] {
 
-  override def show(appState: Ref[IO, PhotoEdAppState])(edImage: EdImage): IO[Unit] = {
+  override def show(appState: Ref[IO, PhotoEdAppState[IO]])(edImage: Image): IO[Unit] = {
 
     for {
-      isShowing <- appState.get.map(_.isShowing)
+      isShowing <- appState.get.map(_.imagesStatus.head.isShowing)
       _         <- if !isShowing then IO.unit
       else {
         for {
@@ -32,39 +30,47 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
 
   }
 
-  override def close(appState: Ref[IO, PhotoEdAppState]): IO[Unit] = {
+  override def close(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] = {
     for {
       _ <- onEDT {
              jFrame.dispose()
            }
-      _ <- appState.update(_.copy(isShowing = false, toBeShown = false))
+      _ <- appState.update(state =>
+             state.copy(imagesStatus =
+               state.imagesStatus.map(status => status.copy(isShowing = false, toBeShown = false))
+             )
+           )
     } yield ()
   }
 
-  override def hide(appState: Ref[IO, PhotoEdAppState]): IO[Unit] =
+  override def hide(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] =
     for {
       _ <- onEDT {
              jFrame.setVisible(false)
            }
-      _ <- appState.update(_.copy(isShowing = false))
+      _ <- appState.update(state =>
+             state.copy(imagesStatus =
+               state.imagesStatus.map(status => status.copy(isShowing = false))
+             )
+           )
     } yield ()
 
 }
 
-object EdImageViewerImpl {
+object ImageWindowImpl {
 
-  def makeResource(name: String): Resource[IO, EdImageViewer[IO]] = {
+  def makeResource(name: String): Resource[IO, ImageWindow[IO]] = {
     Resource.make {
       onEDT {
         val jFrame      = new JFrame(name)
-        val imageJPanel = new EdImageJPanel(EdImage.empty)
+        val imageJPanel = new EdImageJPanel(Image.empty)
 
         jFrame.add(imageJPanel)
         jFrame.pack()
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
 
         (jFrame, imageJPanel)
-      }.map { (jFrame, jPanel) => new EdImageViewerImpl(name, jFrame, jPanel) }
+      }.map { (jFrame, jPanel) => new ImageWindowImpl(name, jFrame, jPanel) }
     } { viewer =>
       onEDT {
         viewer.jFrame.dispose()

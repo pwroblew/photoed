@@ -4,30 +4,24 @@ import cats.Functor
 import cats.effect.Ref
 import cats.syntax.functor.*
 
-case class PhotoEdAppState(
+case class ImageStatus(id: String, image: Image, isShowing: Boolean, toBeShown: Boolean)
+
+case class PhotoEdAppState[F[_]](
     history: List[String],
-    edImage: Option[EdImage],
-    isShowing: Boolean,
+    commands: List[String],
     toBeContinued: Boolean,
-    toBeShown: Boolean
+    imagesStatus: List[ImageStatus]
 )
 
-def TO_BE_CONTINUED[F[_]: Functor](appState: Ref[F, PhotoEdAppState]): F[Boolean] =
+def TO_BE_CONTINUED[F[_]: Functor](appState: Ref[F, PhotoEdAppState[F]]): F[Boolean] =
   appState.get.map(_.toBeContinued)
 
-def TO_BE_CONTINUED_BUT_NOT_SHOWN[F[_]: Functor](appState: Ref[F, PhotoEdAppState]): F[Boolean] =
-  appState.get.map(state => state.toBeContinued && !state.toBeShown)
-
-def TO_BE_SHOWN[F[_]: Functor](appState: Ref[F, PhotoEdAppState]): F[Boolean] =
-  appState.get.map(state => state.toBeContinued && state.toBeShown)
-
 object PhotoEdAppState {
-  private val empty: PhotoEdAppState = PhotoEdAppState(
+  private def empty[F[_]]: PhotoEdAppState[F] = PhotoEdAppState(
     history = List.empty,
-    edImage = Option.empty,
-    isShowing = false,
+    commands = List.empty,
     toBeContinued = true,
-    toBeShown = false
+    imagesStatus = List.empty
   )
-  def initialState: PhotoEdAppState  = empty
+  def initialState[F[_]]: PhotoEdAppState[F]  = empty[F]
 }

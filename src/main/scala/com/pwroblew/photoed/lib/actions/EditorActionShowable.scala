@@ -2,50 +2,34 @@ package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
 import cats.effect.Ref
-import cats.syntax.all.*
 import cats.effect.std.Console
-import com.pwroblew.photoed.lib.actions.EditorActionShowable.emptyAction
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
+import cats.syntax.all.*
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.impl_f.WindowsManager
 
 trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
 
   def act(
-      state: Ref[F, PhotoEdAppState],
+      state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
-      imageViewer: EdImageViewer[F]
-  ): F[Unit]
+      windowsManager: WindowsManager[F]
+  ): F[AdditionalActions]
 
-  def run(
-      state: Ref[F, PhotoEdAppState],
-      commandDetails: List[String],
-      imageViewer: EdImageViewer[F]
-  ): F[Unit] =
-    for {
-      _ <- prev.run(state, commandDetails, imageViewer)
-      _ <- act(state, commandDetails, imageViewer)
-      _ <- next.run(state, commandDetails, imageViewer)
-    } yield ()
-
-  def next: EditorActionShowable[F] = emptyAction
-  def prev: EditorActionShowable[F] = emptyAction
+  def keywords: List[ActionKeyword]
 
 }
 
 object EditorActionShowable {
-  def emptyAction[F[_]: MonadThrow: Console]: EditorActionShowable[F] =
+  def emptyAction[F[_]: {MonadThrow, Console}]: EditorActionShowable[F] =
     new EditorActionShowable[F] {
 
       override def act(
-          state: Ref[F, PhotoEdAppState],
+          state: Ref[F, PhotoEdAppState[F]],
           commandDetails: List[String],
-          imageViewer: EdImageViewer[F]
-      ): F[Unit] = ().pure[F]
+          windowsManager: WindowsManager[F]
+      ): F[AdditionalActions] =
+        AdditionalActions(List.empty, List.empty).pure[F]
 
-      override def run(
-          state: Ref[F, PhotoEdAppState],
-          commandDetails: List[String],
-          imageViewer: EdImageViewer[F]
-      ): F[Unit] = act(state, commandDetails, imageViewer)
-
+      override def keywords: List[ActionKeyword] = List.empty[ActionKeyword]
     }
 }

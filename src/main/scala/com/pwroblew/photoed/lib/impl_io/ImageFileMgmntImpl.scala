@@ -3,7 +3,7 @@ package com.pwroblew.photoed.lib.impl_io
 import cats.effect.IO
 import cats.implicits.catsSyntaxEq
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.{EdImage, EdImageFiles}
+import com.pwroblew.photoed.lib.{Image, ImageFileMgmnt}
 
 import java.awt.image.BufferedImage
 import java.awt.{Color, Graphics2D}
@@ -11,16 +11,16 @@ import java.io.File
 import javax.imageio.ImageIO
 import scala.util.matching.Regex
 
-object EdImageFilesImpl extends EdImageFiles[IO] {
+object ImageFileMgmntImpl extends ImageFileMgmnt[IO] {
 
   private val FilenameRegex: Regex = raw".*\.([a-zA-Z]{2,4})".r
 
-  override def load(path: String): IO[EdImage] =
+  override def load(path: String): IO[Image] =
     IO.blocking(ImageIO.read(new File(path)))
       .map(toIntArgb)
-      .map(EdImage.fromBuffered)
+      .map(Image.fromBuffered)
 
-  override def save(edImage: EdImage, path: String): IO[Unit] = {
+  override def save(edImage: Image, path: String): IO[Unit] = {
 
     val (fullPath, extension) = path match {
       case FilenameRegex(ext) => (path, ext)

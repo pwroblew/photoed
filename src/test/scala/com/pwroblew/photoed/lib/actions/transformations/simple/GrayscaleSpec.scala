@@ -1,5 +1,7 @@
 package com.pwroblew.photoed.lib.actions.transformations.simple
 
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.{Grayscale, Pixel}
+
 class GrayscaleSpec extends munit.FunSuite {
   test("graying black pixel") {
     val result: Int = Grayscale.pixelTransform(Pixel.BLACK.value)
