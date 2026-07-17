@@ -1,10 +1,8 @@
 package com.pwroblew.photoed.lib.impl_io
 
-import cats.data.OptionT
 import cats.effect.{IO, Ref, Resource}
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
 import com.pwroblew.photoed.lib.impl_io.EdImageJPanel
-import com.pwroblew.photoed.lib.impl_io.ImageWindowImpl.{makeResource, onEDT}
+import com.pwroblew.photoed.lib.impl_io.ImageWindowImpl.onEDT
 import com.pwroblew.photoed.lib.{Image, ImageWindow, PhotoEdAppState}
 
 import javax.swing.{JFrame, WindowConstants}
@@ -50,7 +48,11 @@ class ImageWindowImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdI
       _ <- onEDT {
              jFrame.setVisible(false)
            }
-      _ <- appState.update(state => state.copy(imagesStatus = state.imagesStatus.map(status => status.copy(isShowing = false))))
+      _ <- appState.update(state =>
+             state.copy(imagesStatus =
+               state.imagesStatus.map(status => status.copy(isShowing = false))
+             )
+           )
     } yield ()
 
 }

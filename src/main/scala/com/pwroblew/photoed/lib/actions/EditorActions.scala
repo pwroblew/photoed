@@ -8,10 +8,6 @@ import com.pwroblew.photoed.lib.actions.action_definitions._
 import com.pwroblew.photoed.lib.{ImageFileMgmnt, ImageWindow}
 import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.Invert
 
-
-  
- 
-
 object EditorActions {
 
   def basicActions[F[_]: {MonadThrow, Console}](using
