@@ -6,14 +6,14 @@ import cats.syntax.all.*
 import cats.effect.std.Console
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 import com.pwroblew.photoed.lib.actions.EditorActionBasic.emptyActionB
-import com.pwroblew.photoed.lib.impl_f.WindowHandle
+import com.pwroblew.photoed.lib.impl_f.WindowsManager
 
 trait EditorActionBasic[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
   override def act(
-      state: Ref[F, PhotoEdAppState[F]],
-      commandDetails: List[String],
-      windowHandle: WindowHandle[F]
+                    state: Ref[F, PhotoEdAppState[F]],
+                    commandDetails: List[String],
+                    windowsManager: WindowsManager[F]
   ): F[AdditionalActions] =
     actB(state, commandDetails)
 

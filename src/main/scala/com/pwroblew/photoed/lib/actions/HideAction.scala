@@ -5,7 +5,7 @@ import cats.data.OptionT
 import cats.effect.{Ref, Resource}
 import cats.effect.std.Console
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.impl_f.WindowHandle
+import com.pwroblew.photoed.lib.impl_f.WindowsManager
 import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
 class HideAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
@@ -13,11 +13,20 @@ class HideAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
   override def act(
       state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
-      windowHandle: WindowHandle[F]
-  ): F[AdditionalActions] = { // imageViewer.hide(state) >> AdditionalActions.empty.pure[F]
+      windowsManager: WindowsManager[F]
+  ): F[AdditionalActions] = {
+
+    val maybeId: Option[String] = commandDetails.tail.headOption
+
     val value: OptionT[F, Unit] = for {
-      viewerWindow <- OptionT(windowHandle.windowRef.get)
-      _            <- OptionT.liftF(viewerWindow.viewer.hide(state))
+      viewerWindow <- OptionT(windowsManager.windowsRefs.get.map(windows =>
+                        maybeId match {
+                          case None     => windows.headOption.map(_._2)
+                          case Some(id) => windows.get(id)
+                        }
+                      ))
+
+      _ <- OptionT.liftF(viewerWindow.viewer.hide(state))
     } yield ()
     value.value >> AdditionalActions.empty.pure[F]
   }

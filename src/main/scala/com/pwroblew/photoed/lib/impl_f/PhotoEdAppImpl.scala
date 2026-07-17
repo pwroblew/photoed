@@ -15,43 +15,46 @@ final case class ViewerWindow[F[_]](
     release: F[Unit]
 )
 
-final class WindowHandle[F[_]: [G[_]] =>> MonadCancel[
+final class WindowsManager[F[_]: [G[_]] =>> MonadCancel[
   G,
   Throwable
-]](val windowRef: Ref[F, Option[ViewerWindow[F]]]) {
+]](val windowsRefs: Ref[F, Map[String, ViewerWindow[F]]]) {
 
-  def open(res: Resource[F, EdImageViewer[F]]): F[Unit] = {
+  def open(id: String, res: Resource[F, EdImageViewer[F]]): F[Unit] = {
     val result: OptionT[F, Unit] = for {
-      _                 <- OptionT(windowRef.get.map {
-                             case Some(_) => None
-                             case None    => Some(())
-                           })
+      _                 <- OptionT(windowsRefs.get.map(refs => Option.when(!refs.keySet.contains(id))(())))
       (viewer, release) <- OptionT.liftF(res.allocated[EdImageViewer[F]])
-      _                 <- OptionT.liftF(windowRef.set(ViewerWindow(viewer, release).some))
+      _                 <- OptionT.liftF(windowsRefs.update(windows =>
+                             windows + (id -> ViewerWindow(viewer, release))
+                           ))
     } yield ()
     result.value.void
   }
 
-  def close(): F[Unit] = {
-    val value: F[F[Unit]] = for {
-      release <- windowRef.modify {
-                   case None         => None -> ().pure[F]
-                   case Some(window) => None -> window.release
-                 }
-    } yield release
-    value.flatten
+  def close(id: String): F[Unit] =
+    windowsRefs.modify { windows =>
+      windows.get(id) match {
+        case None         => windows        -> ().pure[F]
+        case Some(window) => (windows - id) -> window.release
+      }
+    }.flatten
+
+  def closeAll(): F[Unit] = {
+    windowsRefs.modify { windows =>
+      windows.empty -> windows.toList.map(_._2).traverse(_.release)
+    }.flatten.void
   }
 
 }
 
-object WindowHandle {
-  def makeResource[F[_]: Sync]: Resource[F, WindowHandle[F]] =
-    Resource.make[F, WindowHandle[F]] {
+object WindowsManager {
+  def makeResource[F[_]: Sync]: Resource[F, WindowsManager[F]] =
+    Resource.make[F, WindowsManager[F]] {
       for {
-        windowRef <- Ref.of[F, Option[ViewerWindow[F]]](Option.empty[ViewerWindow[F]])
-      } yield new WindowHandle(windowRef)
-    } { windowHandle =>
-      windowHandle.close()
+        windowRef <- Ref.of[F, Map[String, ViewerWindow[F]]](Map.empty[String, ViewerWindow[F]])
+      } yield new WindowsManager(windowRef)
+    } { windowsManager =>
+      windowsManager.closeAll()
     }
 }
 
@@ -67,7 +70,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](
 
   override def nextStep(
       appState: Ref[F, PhotoEdAppState[F]],
-      windowHandle: WindowHandle[F]
+      windowsManager: WindowsManager[F]
   ): F[Unit] = {
 
     given EdImageFiles[F]                           = imageFiles
@@ -84,7 +87,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](
                                case _ => appState.update(state => state.copy(commands = state.commands.tail))
                              })
       additionalActions <-
-        OptionT.liftF(action.act(appState, commandDetails, windowHandle)
+        OptionT.liftF(action.act(appState, commandDetails, windowsManager)
           .onError {
             case _ => appState.update(state => state.copy(commands = state.commands.tail))
           })

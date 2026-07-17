@@ -31,7 +31,7 @@ class LoadAction[F[_]: {MonadThrow, Console}](
       }
 
       loadImage(imageLoader.load)(path, imageId)(state)
-        >> AdditionalActions(List.empty[String], List("show")).pure[F]
+        >> AdditionalActions(List.empty[String], List(s"show ${imageId}")).pure[F]
     }
   }
 

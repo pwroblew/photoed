@@ -15,13 +15,25 @@ class TransformAction[F[_]: {MonadThrow,
   override def actB(
       stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
-  ): F[AdditionalActions] = stateRef.update { state =>
-    state.copy(
-      imagesStatus = state.imagesStatus.map(status =>
-        status.copy(image = transformation.transform(status.image))
-      )
-    )
-  } >> AdditionalActions(List.empty[String], List("display")).pure[F]
+  ): F[AdditionalActions] = {
+
+    val maybeId: Option[String] = commandDetails.tail.headOption
+
+    for {
+      imageId <- stateRef.modify { state =>
+                   val imgId: String = maybeId.getOrElse(state.imagesStatus.head.id)
+
+                   val newState: PhotoEdAppState[F] = state.copy(
+                     imagesStatus = state.imagesStatus.map(status =>
+                       if status.id == imgId then
+                         status.copy(image = transformation.transform(status.image))
+                       else status
+                     )
+                   )
+                   (newState, imgId)
+                 }
+    } yield AdditionalActions(List.empty[String], List(s"display ${imageId}"))
+  }
 
   override def keywords: List[String] = transformation.keywords
 }

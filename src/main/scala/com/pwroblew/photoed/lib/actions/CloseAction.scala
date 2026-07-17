@@ -11,14 +11,20 @@ class CloseAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
   override def actB(
       stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
-  ): F[AdditionalActions] =
+  ): F[AdditionalActions] = {
+
+    val maybeId: Option[String] = commandDetails.tail.headOption
+
     stateRef.update { state =>
+      val imgId: String = maybeId.getOrElse(state.imagesStatus.head.id)
+
       state.copy(imagesStatus =
         state.imagesStatus.map(status =>
-          status.copy(toBeShown = false)
+          if status.id == imgId then status.copy(toBeShown = false) else status
         )
       )
     } >> AdditionalActions.empty.pure[F]
+  }
 
   override def keywords: List[String] = List("close")
 }
