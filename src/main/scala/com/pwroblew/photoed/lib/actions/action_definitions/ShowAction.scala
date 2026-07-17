@@ -1,15 +1,16 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.effect.{IO, Ref, Resource}
 import cats.effect.std.Console
+import cats.effect.{Ref, Resource}
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.impl_f.{ViewerWindow, WindowsManager}
-import com.pwroblew.photoed.lib.impl_io.EdImageViewerImpl
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
+import com.pwroblew.photoed.lib.actions.ActionKeyword.{DISPLAY, SHOW}
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
+import com.pwroblew.photoed.lib.impl_f.WindowsManager
+import com.pwroblew.photoed.lib.{ImageWindow, PhotoEdAppState}
 
 class ShowAction[F[_]: {MonadThrow, Console}](using
-    makeImageWindowResource: String => Resource[F, EdImageViewer[F]]
+    makeImageWindowResource: String => Resource[F, ImageWindow[F]]
 ) extends EditorActionShowable[F] {
 
   override def act(
@@ -43,14 +44,14 @@ class ShowAction[F[_]: {MonadThrow, Console}](using
                         )
                       )
       _            <- windowsManager.open(imageId, makeImageWindowResource(imageId))
-    } yield AdditionalActions(List.empty[String], List(s"display $imageId"))
+    } yield AdditionalActions(List.empty[String], List(s"${DISPLAY.toCmd} $imageId"))
   }
 
-  override def keywords: List[String] = List("show")
+  override def keywords: List[ActionKeyword] = List(SHOW)
 }
 
 object ShowAction {
   def apply[F[_]: {MonadThrow, Console}](using
-      makeImageWindowResource: String => Resource[F, EdImageViewer[F]]
+      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
   ): ShowAction[F] = new ShowAction()
 }

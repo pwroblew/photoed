@@ -1,4 +1,4 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
 import cats.data.EitherT
@@ -6,6 +6,8 @@ import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.actions.ActionKeyword.HISTORY
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionBasic}
 
 class HistoryAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
 
@@ -28,5 +30,5 @@ class HistoryAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
     res.rethrowT >> AdditionalActions.empty.pure[F]
   }
 
-  override def keywords: List[String] = List("history")
+  override def keywords: List[ActionKeyword] = List(HISTORY)
 }

@@ -1,10 +1,12 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.effect.{Ref, Resource}
-import cats.syntax.all.*
+import cats.effect.Ref
 import cats.effect.std.Console
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
+import cats.syntax.all.*
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.actions.ActionKeyword.CLOSE
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionBasic}
 
 class CloseAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
 
@@ -26,7 +28,7 @@ class CloseAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
     } >> AdditionalActions.empty.pure[F]
   }
 
-  override def keywords: List[String] = List("close")
+  override def keywords: List[ActionKeyword] = List(CLOSE)
 }
 
 object CloseAction {

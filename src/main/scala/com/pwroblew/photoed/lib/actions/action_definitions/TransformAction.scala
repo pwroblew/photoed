@@ -1,12 +1,13 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.effect.{Ref, Resource}
+import cats.effect.Ref
 import cats.effect.std.Console
-import cats.syntax.all._
-import cats.implicits.catsSyntaxFlatMapOps
-import com.pwroblew.photoed.lib.actions.transformations.EdImageTransformation
-import com.pwroblew.photoed.lib.{EdImage, EdImageViewer, PhotoEdAppState}
+import cats.syntax.all.*
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.actions.ActionKeyword.DISPLAY
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.EdImageTransformation
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionBasic}
 
 class TransformAction[F[_]: {MonadThrow,
   Console}](transformation: EdImageTransformation)
@@ -32,8 +33,8 @@ class TransformAction[F[_]: {MonadThrow,
                    )
                    (newState, imgId)
                  }
-    } yield AdditionalActions(List.empty[String], List(s"display ${imageId}"))
+    } yield AdditionalActions(List.empty[String], List(s"${DISPLAY.toCmd} ${imageId}"))
   }
 
-  override def keywords: List[String] = transformation.keywords
+  override def keywords: List[ActionKeyword] = transformation.keywords
 }

@@ -1,4 +1,4 @@
-package com.pwroblew.photoed.lib.actions.transformations.simple
+package com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple
 
 case class Pixel(value: Int) extends AnyVal {
   def getA: Int = (value & 0xff000000) >> 24

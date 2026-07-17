@@ -1,4 +1,7 @@
-package com.pwroblew.photoed.lib.actions.transformations.simple
+package com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple
+
+import com.pwroblew.photoed.lib.actions.ActionKeyword
+import com.pwroblew.photoed.lib.actions.ActionKeyword.{GRAYSCALE, GREYSCALE}
 
 object Grayscale extends SimpleTransformation {
 
@@ -10,5 +13,5 @@ object Grayscale extends SimpleTransformation {
     Pixel.create(grayed, grayed, grayed).value
   }
 
-  override def keywords: List[String] = List("greyscale", "grayscale")
+  override def keywords: List[ActionKeyword] = List(GRAYSCALE, GREYSCALE)
 }

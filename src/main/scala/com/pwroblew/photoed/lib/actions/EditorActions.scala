@@ -3,19 +3,24 @@ package com.pwroblew.photoed.lib.actions
 import cats.MonadThrow
 import cats.effect.Resource
 import cats.effect.std.Console
-import com.pwroblew.photoed.lib.{EdImageFiles, EdImageViewer}
-import com.pwroblew.photoed.lib.actions.transformations.simple.{Grayscale, Invert}
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple._
+import com.pwroblew.photoed.lib.actions.action_definitions._
+import com.pwroblew.photoed.lib.{ImageFileMgmnt, ImageWindow}
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.Invert
+
+
+  
+ 
 
 object EditorActions {
 
   def basicActions[F[_]: {MonadThrow, Console}](using
-      imageLoader: EdImageFiles[F]
+      imageLoader: ImageFileMgmnt[F]
   ): List[EditorActionBasic[F]] = List(
     ClearAction[F],
     CloseAction[F],
     LoadAction[F],
     SaveAction[F],
-    SaveResAction[F],
     ExitAction[F],
     TransformAction[F](Invert),
     TransformAction[F](Grayscale),
@@ -24,7 +29,7 @@ object EditorActions {
   )
 
   def showingActions[F[_]: {MonadThrow, Console}](using
-      makeImageWindowResource: String => Resource[F, EdImageViewer[F]]
+      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
   ): List[EditorActionShowable[F]] = List(
     DisplayAction[F],
     ShowAction[F],
@@ -32,20 +37,20 @@ object EditorActions {
   )
 
   def actionsMap[F[_], EdAction[G[_]] <: EditorActionShowable[G]](actions: List[EdAction[F]])
-      : Map[String, EdAction[F]] = actions
+      : Map[ActionKeyword, EdAction[F]] = actions
     .map(action => (action, action.keywords))
     .flatMap((a, keys) => keys.map(_ -> a))
     .toMap
 
-  def allActionsMap[F[_]: {MonadThrow,
-    Console}](using
-      imageLoader: EdImageFiles[F],
-      makeImageWindowResource: String => Resource[F, EdImageViewer[F]]
-  ): Map[String, EditorActionShowable[F]] =
+  def allActionsMap[F[_]: {MonadThrow, Console}](using
+      imageLoader: ImageFileMgmnt[F],
+      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+  ): Map[ActionKeyword, EditorActionShowable[F]] =
     actionsMap(basicActions[F]) ++ actionsMap(showingActions[F])
 
-  def basicActionsMap[F[_]: {MonadThrow,
-    Console}](using imageLoader: EdImageFiles[F]): Map[String, EditorActionBasic[F]] =
+  def basicActionsMap[F[_]: {MonadThrow, Console}](using
+      imageLoader: ImageFileMgmnt[F]
+  ): Map[ActionKeyword, EditorActionBasic[F]] =
     actionsMap(basicActions[F])
 
 }

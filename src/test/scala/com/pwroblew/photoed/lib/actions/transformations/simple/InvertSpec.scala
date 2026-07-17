@@ -1,5 +1,7 @@
 package com.pwroblew.photoed.lib.actions.transformations.simple
 
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.{Invert, Pixel}
+
 class InvertSpec extends munit.FunSuite {
   test("inverting black pixel") {
     val result: Int = Invert.pixelTransform(Pixel.BLACK.value)

@@ -1,8 +1,8 @@
 package com.pwroblew.photoed.lib.impl_io
 
 import cats.effect.IO
-import com.pwroblew.photoed.lib.actions.transformations.simple.Pixel
-import com.pwroblew.photoed.lib.{EdImage, EdImageFiles}
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.Pixel
+import com.pwroblew.photoed.lib.{Image, ImageFileMgmnt}
 import munit.CatsEffectSuite
 
 import java.awt.image.BufferedImage
@@ -10,7 +10,7 @@ import java.io.File
 
 class EdImageFilesSpec extends CatsEffectSuite {
 
-  val loader: EdImageFiles[IO] = EdImageFilesImpl
+  val loader: ImageFileMgmnt[IO] = ImageFileMgmntImpl
 
   test("save and load png image") {
     val buffImage = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB)
@@ -22,7 +22,7 @@ class EdImageFilesSpec extends CatsEffectSuite {
     val tmpImageFile: File = File.createTempFile("photoed-test", ".png")
 
     for {
-      _           <- loader.save(EdImage.fromBuffered(buffImage), tmpImageFile.getAbsolutePath)
+      _           <- loader.save(Image.fromBuffered(buffImage), tmpImageFile.getAbsolutePath)
       loadedImage <- loader.load(tmpImageFile.getAbsolutePath)
       _           <- IO {
                        assert(tmpImageFile.exists())
@@ -48,7 +48,7 @@ class EdImageFilesSpec extends CatsEffectSuite {
     val tmpImageFile: File = File.createTempFile("photoed-test", ".jpg")
 
     for {
-      _           <- loader.save(EdImage.fromBuffered(buffImage), tmpImageFile.getAbsolutePath)
+      _           <- loader.save(Image.fromBuffered(buffImage), tmpImageFile.getAbsolutePath)
       loadedImage <- loader.load(tmpImageFile.getAbsolutePath)
       _           <- IO {
                        assert(tmpImageFile.exists())

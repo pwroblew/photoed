@@ -1,12 +1,14 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
 import cats.data.OptionT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.actions.ActionKeyword.DISPLAY
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
 import com.pwroblew.photoed.lib.impl_f.WindowsManager
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
 class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
@@ -35,14 +37,14 @@ class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F]
                           case Some(id) => windows.get(id)
                         }
                       ))
-      _            <- OptionT.liftF(viewerWindow.viewer.show(stateRef)(image))
+      _            <- OptionT.liftF(viewerWindow.imageWindow.show(stateRef)(image))
     } yield ()
 
     res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded"))
       >> AdditionalActions.empty.pure[F]
   }
 
-  override def keywords: List[String] = List("display")
+  override def keywords: List[ActionKeyword] = List(DISPLAY)
 }
 
 object DisplayAction {

@@ -1,12 +1,14 @@
-package com.pwroblew.photoed.lib.actions
+package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
 import cats.data.OptionT
-import cats.effect.{Ref, Resource}
+import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
+import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.actions.ActionKeyword.HIDE
+import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
 import com.pwroblew.photoed.lib.impl_f.WindowsManager
-import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 
 class HideAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
@@ -26,12 +28,12 @@ class HideAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
                         }
                       ))
 
-      _ <- OptionT.liftF(viewerWindow.viewer.hide(state))
+      _ <- OptionT.liftF(viewerWindow.imageWindow.hide(state))
     } yield ()
     value.value >> AdditionalActions.empty.pure[F]
   }
 
-  override def keywords: List[String] = List("hide")
+  override def keywords: List[ActionKeyword] = List(HIDE)
 }
 
 object HideAction {

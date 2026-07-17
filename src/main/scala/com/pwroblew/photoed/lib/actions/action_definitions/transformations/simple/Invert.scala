@@ -1,4 +1,7 @@
-package com.pwroblew.photoed.lib.actions.transformations.simple
+package com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple
+
+import com.pwroblew.photoed.lib.actions.ActionKeyword
+import com.pwroblew.photoed.lib.actions.ActionKeyword.INVERT
 
 object Invert extends SimpleTransformation {
 
@@ -16,5 +19,5 @@ object Invert extends SimpleTransformation {
 
   }
 
-  override def keywords: List[String] = List("invert")
+  override def keywords: List[ActionKeyword] = List(INVERT)
 }

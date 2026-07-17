@@ -4,7 +4,7 @@ import cats.Functor
 import cats.effect.Ref
 import cats.syntax.functor.*
 
-case class ImageStatus(id: String, image: EdImage, isShowing: Boolean, toBeShown: Boolean)
+case class ImageStatus(id: String, image: Image, isShowing: Boolean, toBeShown: Boolean)
 
 case class PhotoEdAppState[F[_]](
     history: List[String],
@@ -21,7 +21,7 @@ object PhotoEdAppState {
     history = List.empty,
     commands = List.empty,
     toBeContinued = true,
-    imagesStatus = List.empty,
+    imagesStatus = List.empty
   )
   def initialState[F[_]]: PhotoEdAppState[F]  = empty[F]
 }
