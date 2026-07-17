@@ -15,7 +15,7 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
   override def show(appState: Ref[IO, PhotoEdAppState[IO]])(edImage: EdImage): IO[Unit] = {
 
     for {
-      isShowing <- appState.get.map(_.isShowing)
+      isShowing <- appState.get.map(_.imagesStatus.head.isShowing)
       _         <- if !isShowing then IO.unit
       else {
         for {
@@ -37,7 +37,11 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
       _ <- onEDT {
              jFrame.dispose()
            }
-      _ <- appState.update(_.copy(isShowing = false, toBeShown = false))
+      _ <- appState.update(state =>
+             state.copy(imagesStatus =
+               state.imagesStatus.map(status => status.copy(isShowing = false, toBeShown = false))
+             )
+           )
     } yield ()
   }
 
@@ -46,7 +50,7 @@ class EdImageViewerImpl(val name: String, val jFrame: JFrame, val imageJPanel: E
       _ <- onEDT {
              jFrame.setVisible(false)
            }
-      _ <- appState.update(_.copy(isShowing = false))
+      _ <- appState.update(state => state.copy(imagesStatus = state.imagesStatus.map(status => status.copy(isShowing = false))))
     } yield ()
 
 }

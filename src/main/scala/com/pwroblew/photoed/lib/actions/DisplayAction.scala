@@ -11,15 +11,15 @@ import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
   override def act(
-      state: Ref[F, PhotoEdAppState[F]],
+      stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
       windowHandle: WindowHandle[F]
   ): F[AdditionalActions] = {
 
     val res: OptionT[F, Unit] = for {
-      image        <- OptionT(state.get.map(_.edImage))
+      image        <- OptionT(stateRef.get.map(state => state.imagesStatus.headOption.map(_.image)))
       viewerWindow <- OptionT(windowHandle.windowRef.get)
-      _            <- OptionT.liftF(viewerWindow.viewer.show(state)(image))
+      _            <- OptionT.liftF(viewerWindow.viewer.show(stateRef)(image))
     } yield ()
 
     res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded"))

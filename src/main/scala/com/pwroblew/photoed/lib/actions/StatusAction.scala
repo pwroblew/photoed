@@ -17,7 +17,8 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
   ): F[AdditionalActions] =
     for {
       st          <- state.get
-      statusString = s"img-id:[${st.imageId}]  |  img-loaded:[${st.edImage.fold("NO")(_ => "YES")}]"
+      status       = st.imagesStatus.head
+      statusString = s"img-id:[${status.id}]  |  img-loaded:[YES]"
       _           <- Console[F].println(statusString)
     } yield AdditionalActions.empty
 

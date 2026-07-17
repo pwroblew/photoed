@@ -17,10 +17,7 @@ class ClearAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
       case "clear"    => AdditionalActions(List("close", "clearRaw"), List.empty[String]).pure[F]
       case "clearRaw" => stateRef.update(state =>
           state.copy(
-            edImage = Option.empty,
-            isShowing = false,
-            toBeContinued = true,
-            toBeShown = false
+            imagesStatus = List.empty
           )
         )
           >> AdditionalActions.empty.pure[F]

@@ -19,8 +19,8 @@ class ShowAction[F[_]: {MonadThrow, Console}](using
   ): F[AdditionalActions] = for {
     _ <- appState.update(state =>
            state.copy(
-             isShowing = true,
-             toBeShown = true
+             imagesStatus =
+               state.imagesStatus.map(status => status.copy(isShowing = true, toBeShown = true))
            )
          )
     _ <- windowHandle.open(makeImageWindowResource("blabla"))

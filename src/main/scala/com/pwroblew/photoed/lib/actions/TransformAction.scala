@@ -13,12 +13,13 @@ class TransformAction[F[_]: {MonadThrow,
     extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState[F]],
+      stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
-  ): F[AdditionalActions] = state.update { st =>
-    st.copy(
-      edImage = st.edImage.map(transformation.transform),
-      toBeContinued = true
+  ): F[AdditionalActions] = stateRef.update { state =>
+    state.copy(
+      imagesStatus = state.imagesStatus.map(status =>
+        status.copy(image = transformation.transform(status.image))
+      )
     )
   } >> AdditionalActions(List.empty[String], List("display")).pure[F]
 

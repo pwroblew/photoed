@@ -5,7 +5,7 @@ import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.actions.LoadAction.loadImage
-import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{EdImage, EdImageFiles, ImageStatus, PhotoEdAppState}
 
 class LoadAction[F[_]: {MonadThrow, Console}](
     imageLoader: EdImageFiles[F]
@@ -54,8 +54,7 @@ object LoadAction {
       _           <- appState.update(state =>
                        state.copy(
                          history = state.history :+ s"[loaded: $path]",
-                         edImage = imageLoaded.some,
-                         imageId = imageId.some
+                         imagesStatus = state.imagesStatus :+ ImageStatus(imageId, imageLoaded, false, false)
                        )
                      )
     } yield ()

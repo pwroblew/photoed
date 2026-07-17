@@ -9,10 +9,16 @@ import com.pwroblew.photoed.lib.{EdImageViewer, PhotoEdAppState}
 class CloseAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
 
   override def actB(
-      state: Ref[F, PhotoEdAppState[F]],
+      stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String]
   ): F[AdditionalActions] =
-    state.update(_.copy(toBeShown = false)) >> AdditionalActions.empty.pure[F]
+    stateRef.update { state =>
+      state.copy(imagesStatus =
+        state.imagesStatus.map(status =>
+          status.copy(toBeShown = false)
+        )
+      )
+    } >> AdditionalActions.empty.pure[F]
 
   override def keywords: List[String] = List("close")
 }
