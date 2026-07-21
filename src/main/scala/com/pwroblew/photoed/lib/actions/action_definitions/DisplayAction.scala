@@ -1,14 +1,14 @@
 package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.data.OptionT
+import cats.data.{OptionT, StateT}
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.PhotoEdAppState
+import com.pwroblew.photoed.lib.{Image, ImageStatus, PhotoEdAppState}
 import com.pwroblew.photoed.lib.actions.ActionKeyword.DISPLAY
 import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
-import com.pwroblew.photoed.lib.impl_f.WindowsManager
+import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
 
 class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
@@ -16,32 +16,33 @@ class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F]
       stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
       windowsManager: WindowsManager[F]
-  ): F[AdditionalActions] = {
+  ): StateT[F, WindowsMap[F], AdditionalActions] = {
 
-    val maybeId: Option[String] = commandDetails.tail.headOption
+    val imageStatusF: F[ImageStatus] = for {
+      maybeImageStatus <- stateRef.get
+                            .map(state =>
+                              commandDetails.tail.headOption match {
+                                case None     => state.imagesStatuses.headOption
+                                case Some(id) => state.imagesStatuses.find(_.id == id)
+                              }
+                            )
+      _                <-
+        stateRef.get.map(state => state.imagesStatuses).flatMap(statuses =>
+          Console[F].println(statuses.toString + " xx " + maybeImageStatus + "ss " + commandDetails)
+        )
+      imageStatus      <- maybeImageStatus match {
+                            case None     => new RuntimeException(
+                                s"Can't show the image. The image hasn't been loaded. cmd: ${commandDetails}"
+                              ).raiseError
+                            case Some(im) => im.pure[F]
+                          }
+    } yield imageStatus
 
-    val res: OptionT[F, Unit] = for {
-      image <- OptionT(stateRef.get
-                 .map(state => state.imagesStatus)
-                 .map(list =>
-                   maybeId match {
-                     case None     => list.headOption
-                     case Some(id) => list.find(_.id == id)
-                   }
-                 )
-                 .map(_.map(_.image)))
+    for {
+      imageStatus <- StateT.liftF(imageStatusF)
+      _           <- windowsManager.display(imageStatus.id, imageStatus.image)
+    } yield AdditionalActions.empty
 
-      viewerWindow <- OptionT(windowsManager.windowsRefs.get.map(windows =>
-                        maybeId match {
-                          case None     => windows.headOption.map(_._2)
-                          case Some(id) => windows.get(id)
-                        }
-                      ))
-      _            <- OptionT.liftF(viewerWindow.imageWindow.show(stateRef)(image))
-    } yield ()
-
-    res.getOrRaise(new RuntimeException("Can't show the image. The image hasn't been loaded"))
-      >> AdditionalActions.empty.pure[F]
   }
 
   override def keywords: List[ActionKeyword] = List(DISPLAY)

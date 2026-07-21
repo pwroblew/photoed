@@ -1,11 +1,12 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
+import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.PhotoEdAppState
-import com.pwroblew.photoed.lib.impl_f.WindowsManager
+import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
 
 trait EditorActionBasic[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
@@ -13,8 +14,8 @@ trait EditorActionBasic[F[_]: {MonadThrow, Console}] extends EditorActionShowabl
       stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
       windowsManager: WindowsManager[F]
-  ): F[AdditionalActions] =
-    actB(stateRef, commandDetails)
+  ): StateT[F, WindowsMap[F], AdditionalActions] =
+    StateT.liftF(actB(stateRef, commandDetails))
 
   def actB(state: Ref[F, PhotoEdAppState[F]], commandDetails: List[String]): F[AdditionalActions]
 

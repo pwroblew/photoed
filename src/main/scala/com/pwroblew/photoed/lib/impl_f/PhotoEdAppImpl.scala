@@ -1,7 +1,7 @@
 package com.pwroblew.photoed.lib.impl_f
 
 import cats.MonadThrow
-import cats.data.OptionT
+import cats.data.{OptionT, StateT}
 import cats.effect.*
 import cats.effect.std.{Console, Dispatcher}
 import cats.syntax.all.*
@@ -19,28 +19,36 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
   override def nextStep(
       stateRef: Ref[F, PhotoEdAppState[F]],
       windowsManager: WindowsManager[F]
-  ): F[Unit] = {
+  ): StateT[F, WindowsMap[F], Unit] = {
 
-    val getAction: ActionKeyword => Option[EditorActionShowable[F]] =
-      EditorActions.allActionsMap[F].get
+    val actionDetailsFMaybe: OptionT[F, (EditorActionShowable[F], List[String])] = for {
+      cmdLine       <- OptionT(stateRef.get.map(_.commands.headOption))
+      commandDetails = cmdLine.trim.split("\\s+", 10).toList
+      action        <- OptionT.liftF(getCommandActionF(
+                         cmdLine,
+                         commandDetails,
+                         EditorActions.allActionsMap[F].get
+                       ))
+    } yield (action, commandDetails)
 
-    val computation: OptionT[F, Unit] = for {
-      cmdLine           <- OptionT(stateRef.get.map(_.commands.headOption))
-      commandDetails     = cmdLine.trim.split("\\s+", 10).toList
-      action            <- OptionT.liftF(getCommandActionF(cmdLine, commandDetails, getAction))
-      additionalActions <- OptionT.liftF(action.act(stateRef, commandDetails, windowsManager))
-      _                 <- OptionT.liftF(stateRef.update(state => state.copy(history = state.history :+ cmdLine)))
-      _                 <-
-        OptionT.liftF(stateRef.update(state =>
-          state.copy(commands =
-            additionalActions.preActions ::: state.commands.tail ::: additionalActions.postActions
-          )
-        ))
+    val actionDetailsF: F[(EditorActionShowable[F], List[String])] = actionDetailsFMaybe.getOrRaise(
+      new RuntimeException("FATAL - can't get command for processing")
+    )
+
+    for {
+      (action, commandDetails) <- StateT.liftF(actionDetailsF)
+      additionalActions        <- action.act(stateRef, commandDetails, windowsManager)
+                                    .handleErrorWith(_ => StateT.liftF(AdditionalActions.empty.pure[F]))
+      _                        <- StateT.liftF(for {
+                                    _ <- stateRef.update(state =>
+                                           state.copy(
+                                             history = state.history :+ commandDetails.mkString(" "),
+                                             commands =
+                                               additionalActions.preActions ::: state.commands.tail ::: additionalActions.postActions
+                                           )
+                                         )
+                                  } yield ())
     } yield ()
-
-    computation.value.onError {
-      case _ => stateRef.update(state => state.copy(commands = state.commands.tail))
-    }.void
 
   }
 

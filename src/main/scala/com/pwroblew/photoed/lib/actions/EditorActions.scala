@@ -3,8 +3,8 @@ package com.pwroblew.photoed.lib.actions
 import cats.MonadThrow
 import cats.effect.Resource
 import cats.effect.std.Console
-import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple._
-import com.pwroblew.photoed.lib.actions.action_definitions._
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.*
+import com.pwroblew.photoed.lib.actions.action_definitions.{CloseAction, *}
 import com.pwroblew.photoed.lib.{ImageFileMgmnt, ImageWindow}
 import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.Invert
 
@@ -14,7 +14,6 @@ object EditorActions {
       imageLoader: ImageFileMgmnt[F]
   ): List[EditorActionBasic[F]] = List(
     ClearAction[F],
-    CloseAction[F],
     LoadAction[F],
     SaveAction[F],
     ExitAction[F],
@@ -29,7 +28,8 @@ object EditorActions {
   ): List[EditorActionShowable[F]] = List(
     DisplayAction[F],
     ShowAction[F],
-    HideAction[F]
+    HideAction[F],
+    CloseAction[F]
   )
 
   def actionsMap[F[_], EdAction[G[_]] <: EditorActionShowable[G]](actions: List[EdAction[F]])

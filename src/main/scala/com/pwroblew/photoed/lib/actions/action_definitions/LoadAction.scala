@@ -58,7 +58,7 @@ object LoadAction {
       _           <- appState.update(state =>
                        state.copy(
                          history = state.history :+ s"[loaded: $path]",
-                         imagesStatus = state.imagesStatus :+ ImageStatus(imageId, imageLoaded, false, false)
+                         imagesStatuses = state.imagesStatuses :+ ImageStatus(imageId, imageLoaded)
                        )
                      )
     } yield ()
