@@ -1,27 +1,30 @@
 package com.pwroblew.photoed.lib
 
-import cats.Functor
+import cats.{Functor, Monad}
+import cats.data.StateT
 import cats.effect.Ref
 import cats.syntax.functor.*
+import com.pwroblew.photoed.lib.impl_f.WindowsMap
 
-case class ImageStatus(id: String, image: Image, isShowing: Boolean, toBeShown: Boolean)
+case class ImageStatus(id: String, image: Image)
 
 case class PhotoEdAppState[F[_]](
     history: List[String],
     commands: List[String],
     toBeContinued: Boolean,
-    imagesStatus: List[ImageStatus]
+    imagesStatuses: List[ImageStatus]
 )
 
-def TO_BE_CONTINUED[F[_]: Functor](appState: Ref[F, PhotoEdAppState[F]]): F[Boolean] =
-  appState.get.map(_.toBeContinued)
+def TO_BE_CONTINUED[F[_]: Monad](appState: Ref[F, PhotoEdAppState[F]])
+    : StateT[F, WindowsMap[F], Boolean] =
+  StateT.liftF(appState.get.map(_.toBeContinued))
 
 object PhotoEdAppState {
   private def empty[F[_]]: PhotoEdAppState[F] = PhotoEdAppState(
     history = List.empty,
     commands = List.empty,
     toBeContinued = true,
-    imagesStatus = List.empty
+    imagesStatuses = List.empty
   )
   def initialState[F[_]]: PhotoEdAppState[F]  = empty[F]
 }

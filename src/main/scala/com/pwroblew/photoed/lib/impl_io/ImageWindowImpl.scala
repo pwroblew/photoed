@@ -10,51 +10,43 @@ import javax.swing.{JFrame, WindowConstants}
 class ImageWindowImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdImageJPanel)
     extends ImageWindow[IO] {
 
-  override def show(appState: Ref[IO, PhotoEdAppState[IO]])(edImage: Image): IO[Unit] = {
+  override def display(edImage: Image): IO[Unit] = {
 
     for {
-      isShowing <- appState.get.map(_.imagesStatus.head.isShowing)
-      _         <- if !isShowing then IO.unit
-      else {
-        for {
-          _ <- onEDT {
-                 imageJPanel.replaceImage(edImage)
-                 imageJPanel.repaint()
-                 jFrame.pack()
-                 jFrame.setVisible(true)
-               }
-
-        } yield ()
-      }
+      _ <- onEDT {
+             imageJPanel.replaceImage(edImage)
+             imageJPanel.repaint()
+             jFrame.pack()
+             jFrame.setVisible(true)
+           }
     } yield ()
 
   }
 
-  override def close(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] = {
+  override def close: IO[Unit] = {
     for {
       _ <- onEDT {
              jFrame.dispose()
            }
-      _ <- appState.update(state =>
-             state.copy(imagesStatus =
-               state.imagesStatus.map(status => status.copy(isShowing = false, toBeShown = false))
-             )
-           )
+
     } yield ()
   }
 
-  override def hide(appState: Ref[IO, PhotoEdAppState[IO]]): IO[Unit] =
+  override def hide: IO[Unit] =
     for {
       _ <- onEDT {
              jFrame.setVisible(false)
            }
-      _ <- appState.update(state =>
-             state.copy(imagesStatus =
-               state.imagesStatus.map(status => status.copy(isShowing = false))
-             )
-           )
+
     } yield ()
 
+  override def isBeingShown: IO[Boolean] = {
+    for {
+      isBeingShown <- onEDT {
+                        jFrame.isVisible
+                      }
+    } yield isBeingShown
+  }
 }
 
 object ImageWindowImpl {
@@ -71,9 +63,9 @@ object ImageWindowImpl {
 
         (jFrame, imageJPanel)
       }.map { (jFrame, jPanel) => new ImageWindowImpl(name, jFrame, jPanel) }
-    } { viewer =>
+    } { imageWindow =>
       onEDT {
-        viewer.jFrame.dispose()
+        imageWindow.jFrame.dispose()
       }
     }
 

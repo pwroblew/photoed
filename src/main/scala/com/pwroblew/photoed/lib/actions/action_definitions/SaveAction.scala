@@ -58,7 +58,7 @@ object SaveAction {
   ): F[Unit] = {
 
     val res: OptionT[F, Unit] = for {
-      image <- OptionT(appState.get.map(state => state.imagesStatus.headOption.map(_.image)))
+      image <- OptionT(appState.get.map(state => state.imagesStatuses.headOption.map(_.image)))
       path  <- OptionT.pure[F](path)
       _     <- OptionT.liftF(imageSaver(image, path))
       _     <- OptionT.liftF(appState.update(state =>

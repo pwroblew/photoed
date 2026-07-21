@@ -17,11 +17,7 @@ final class ExitAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F]
 
     commandDetails.headOption.flatMap(ActionKeyword.fromCmd) match {
       case Some(EXIT)     => AdditionalActions(List(CLEAR.toCmd, EXIT_RAW.toCmd), List.empty).pure[F]
-      case Some(EXIT_RAW) => stateRef.update(state =>
-          state.copy(
-            toBeContinued = false
-          )
-        )
+      case Some(EXIT_RAW) => stateRef.update(state => state.copy(toBeContinued = false))
           >> AdditionalActions.empty.pure[F]
       case _              => new RuntimeException("FATAL ERROR in ExitAction").raiseError
     }

@@ -18,7 +18,7 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
   ): F[AdditionalActions] =
     for {
       state       <- stateRef.get
-      statusString = state.imagesStatus.map { status =>
+      statusString = state.imagesStatuses.map { status =>
                        s"img-id:[${status.id}]  |  img-loaded:[YES]"
                      }.mkString("\n")
       _           <- Console[F].println(statusString)

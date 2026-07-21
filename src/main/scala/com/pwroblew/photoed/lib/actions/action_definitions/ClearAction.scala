@@ -16,12 +16,9 @@ class ClearAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F] {
   ): F[AdditionalActions] = {
 
     commandDetails.headOption.flatMap(ActionKeyword.fromCmd) match {
-      case Some(CLEAR)     => AdditionalActions(List(CLOSE.toCmd, CLEAR_RAW.toCmd), List.empty).pure[F]
-      case Some(CLEAR_RAW) => stateRef.update(state =>
-          state.copy(
-            imagesStatus = List.empty
-          )
-        ) >> AdditionalActions.empty.pure[F]
+      case Some(CLEAR)     => AdditionalActions(List(s"${CLOSE.toCmd} ALL", CLEAR_RAW.toCmd), List.empty).pure[F]
+      case Some(CLEAR_RAW) => stateRef.update(state => state.copy(imagesStatuses = List.empty))
+          >> AdditionalActions.empty.pure[F]
       case _               => new RuntimeException("FATAL ERROR").raiseError
     }
   }

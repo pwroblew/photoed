@@ -1,11 +1,12 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
+import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.PhotoEdAppState
-import com.pwroblew.photoed.lib.impl_f.WindowsManager
+import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
 
 trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
 
@@ -13,10 +14,11 @@ trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
       state: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
       windowsManager: WindowsManager[F]
-  ): F[AdditionalActions]
+  ): StateT[F, WindowsMap[F], AdditionalActions]
 
   def keywords: List[ActionKeyword]
 
+  def maybeImageId(commandDetails: List[String]): Option[String] = commandDetails.tail.headOption
 }
 
 object EditorActionShowable {
@@ -27,8 +29,8 @@ object EditorActionShowable {
           state: Ref[F, PhotoEdAppState[F]],
           commandDetails: List[String],
           windowsManager: WindowsManager[F]
-      ): F[AdditionalActions] =
-        AdditionalActions(List.empty, List.empty).pure[F]
+      ): StateT[F, WindowsMap[F], AdditionalActions] =
+        AdditionalActions(List.empty, List.empty).pure
 
       override def keywords: List[ActionKeyword] = List.empty[ActionKeyword]
     }

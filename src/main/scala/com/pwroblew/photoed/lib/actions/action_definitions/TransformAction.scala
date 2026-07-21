@@ -22,10 +22,10 @@ class TransformAction[F[_]: {MonadThrow,
 
     for {
       imageId <- stateRef.modify { state =>
-                   val imgId: String = maybeId.getOrElse(state.imagesStatus.head.id)
+                   val imgId: String = maybeId.getOrElse(state.imagesStatuses.head.id)
 
                    val newState: PhotoEdAppState[F] = state.copy(
-                     imagesStatus = state.imagesStatus.map(status =>
+                     imagesStatuses = state.imagesStatuses.map(status =>
                        if status.id == imgId then
                          status.copy(image = transformation.transform(status.image))
                        else status
