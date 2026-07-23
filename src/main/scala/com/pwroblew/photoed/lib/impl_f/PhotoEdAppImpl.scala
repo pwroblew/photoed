@@ -3,18 +3,17 @@ package com.pwroblew.photoed.lib.impl_f
 import cats.MonadThrow
 import cats.data.{OptionT, StateT}
 import cats.effect.*
-import cats.effect.std.{Console, Dispatcher}
+import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed
+import com.pwroblew.photoed.StatefulCLI.MakeImageWindowResource
 import com.pwroblew.photoed.lib.*
 import com.pwroblew.photoed.lib.actions.*
 
 final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
     imageFileMgmnt: ImageFileMgmnt[F],
-    makeImageWindowRes: String => Resource[F, ImageWindow[F]]
+    makeImageWindowRes: MakeImageWindowResource[F]
 ) extends PhotoEdApp[F] {
-
-  private val dispatcherRes: Resource[F, Dispatcher[F]] = Dispatcher.parallel[F]
 
   override def nextStep(
       stateRef: Ref[F, PhotoEdAppState[F]],
@@ -28,7 +27,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
                          cmdLine,
                          commandDetails,
                          EditorActions.allActionsMap[F].get
-                       ))
+                       ).onError(_ => stateRef.update(state => state.copy(commands = state.commands.tail))))
     } yield (action, commandDetails)
 
     val actionDetailsF: F[(EditorActionShowable[F], List[String])] = actionDetailsFMaybe.getOrRaise(
@@ -78,6 +77,6 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
 object PhotoEdAppImpl {
   def apply[F[_]: {MonadThrow, Console, Async}](using
       imageLoader: ImageFileMgmnt[F],
-      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): PhotoEdAppImpl[F] = new PhotoEdAppImpl[F]
 }

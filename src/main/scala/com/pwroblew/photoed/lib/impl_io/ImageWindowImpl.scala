@@ -1,10 +1,12 @@
 package com.pwroblew.photoed.lib.impl_io
 
-import cats.effect.{IO, Ref, Resource}
+import cats.effect.std.Dispatcher
+import cats.effect.{IO, Resource}
 import com.pwroblew.photoed.lib.impl_io.EdImageJPanel
 import com.pwroblew.photoed.lib.impl_io.ImageWindowImpl.onEDT
-import com.pwroblew.photoed.lib.{Image, ImageWindow, PhotoEdAppState}
+import com.pwroblew.photoed.lib.{Image, ImageWindow}
 
+import java.awt.event.{WindowAdapter, WindowEvent}
 import javax.swing.{JFrame, WindowConstants}
 
 class ImageWindowImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdImageJPanel)
@@ -51,7 +53,10 @@ class ImageWindowImpl(val name: String, val jFrame: JFrame, val imageJPanel: EdI
 
 object ImageWindowImpl {
 
-  def makeResource(name: String): Resource[IO, ImageWindow[IO]] = {
+  def makeResource(
+      name: String,
+      dispatcher: Dispatcher[IO]
+  ): Resource[IO, ImageWindow[IO]] = {
     Resource.make {
       onEDT {
         val jFrame      = new JFrame(name)
@@ -59,10 +64,22 @@ object ImageWindowImpl {
 
         jFrame.add(imageJPanel)
         jFrame.pack()
-        jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
+        jFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
 
         (jFrame, imageJPanel)
-      }.map { (jFrame, jPanel) => new ImageWindowImpl(name, jFrame, jPanel) }
+      }.map { (jFrame, jPanel) =>
+        val imageWindow = new ImageWindowImpl(name, jFrame, jPanel)
+
+        jFrame.addWindowListener(new WindowAdapter {
+          override def windowClosing(e: WindowEvent): Unit = {
+            dispatcher.unsafeRunAndForget(
+              imageWindow.hide >> IO.blocking(super.windowClosing(e))
+            )
+          }
+        })
+
+        imageWindow
+      }
     } { imageWindow =>
       onEDT {
         imageWindow.jFrame.dispose()

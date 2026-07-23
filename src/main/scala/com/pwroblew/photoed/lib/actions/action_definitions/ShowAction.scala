@@ -2,16 +2,17 @@ package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
 import cats.data.StateT
-import cats.effect.std.Console
+import cats.effect.std.{Console, Dispatcher}
 import cats.effect.{Ref, Resource}
 import cats.syntax.all.*
+import com.pwroblew.photoed.StatefulCLI.MakeImageWindowResource
 import com.pwroblew.photoed.lib.actions.ActionKeyword.{DISPLAY, SHOW}
 import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
 import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
 import com.pwroblew.photoed.lib.{ImageStatus, ImageWindow, PhotoEdAppState}
 
 class ShowAction[F[_]: {MonadThrow, Console}](using
-    makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+    makeImageWindowResource: MakeImageWindowResource[F]
 ) extends EditorActionShowable[F] {
 
   override def act(
@@ -52,6 +53,6 @@ class ShowAction[F[_]: {MonadThrow, Console}](using
 
 object ShowAction {
   def apply[F[_]: {MonadThrow, Console}](using
-      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): ShowAction[F] = new ShowAction()
 }
