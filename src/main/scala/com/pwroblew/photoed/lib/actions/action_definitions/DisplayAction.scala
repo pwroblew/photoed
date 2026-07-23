@@ -1,14 +1,14 @@
 package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.data.{OptionT, StateT}
+import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
-import com.pwroblew.photoed.lib.{Image, ImageStatus, PhotoEdAppState}
 import com.pwroblew.photoed.lib.actions.ActionKeyword.DISPLAY
 import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionShowable}
 import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
+import com.pwroblew.photoed.lib.{ImageStatus, PhotoEdAppState}
 
 class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
 
@@ -26,10 +26,6 @@ class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F]
                                 case Some(id) => state.imagesStatuses.find(_.id == id)
                               }
                             )
-      _                <-
-        stateRef.get.map(state => state.imagesStatuses).flatMap(statuses =>
-          Console[F].println(statuses.toString + " xx " + maybeImageStatus + "ss " + commandDetails)
-        )
       imageStatus      <- maybeImageStatus match {
                             case None     => new RuntimeException(
                                 s"Can't show the image. The image hasn't been loaded. cmd: ${commandDetails}"

@@ -2,11 +2,11 @@ package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
 import cats.effect.Resource
-import cats.effect.std.Console
+import cats.effect.std.{Console, Dispatcher}
+import com.pwroblew.photoed.StatefulCLI.MakeImageWindowResource
 import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.*
-import com.pwroblew.photoed.lib.actions.action_definitions.{CloseAction, *}
+import com.pwroblew.photoed.lib.actions.action_definitions.*
 import com.pwroblew.photoed.lib.{ImageFileMgmnt, ImageWindow}
-import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.Invert
 
 object EditorActions {
 
@@ -19,17 +19,17 @@ object EditorActions {
     ExitAction[F],
     TransformAction[F](Invert),
     TransformAction[F](Grayscale),
-    StatusAction[F],
     HistoryAction[F]
   )
 
   def showingActions[F[_]: {MonadThrow, Console}](using
-      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): List[EditorActionShowable[F]] = List(
     DisplayAction[F],
     ShowAction[F],
     HideAction[F],
-    CloseAction[F]
+    CloseAction[F],
+    StatusAction[F]
   )
 
   def actionsMap[F[_], EdAction[G[_]] <: EditorActionShowable[G]](actions: List[EdAction[F]])
@@ -40,7 +40,7 @@ object EditorActions {
 
   def allActionsMap[F[_]: {MonadThrow, Console}](using
       imageLoader: ImageFileMgmnt[F],
-      makeImageWindowResource: String => Resource[F, ImageWindow[F]]
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): Map[ActionKeyword, EditorActionShowable[F]] =
     actionsMap(basicActions[F]) ++ actionsMap(showingActions[F])
 
