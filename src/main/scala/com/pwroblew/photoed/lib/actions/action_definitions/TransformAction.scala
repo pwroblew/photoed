@@ -1,7 +1,6 @@
 package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
-import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
@@ -10,8 +9,7 @@ import com.pwroblew.photoed.lib.actions.ActionKeyword.DISPLAY
 import com.pwroblew.photoed.lib.actions.action_definitions.transformations.EdImageTransformation
 import com.pwroblew.photoed.lib.actions.{ActionKeyword, AdditionalActions, EditorActionBasic}
 
-class TransformAction[F[_]: {MonadThrow,
-  Console}](transformation: EdImageTransformation)
+class TransformAction[F[_]: {MonadThrow, Console}](transformation: EdImageTransformation)
     extends EditorActionBasic[F] {
 
   override def actB(
