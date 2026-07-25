@@ -49,6 +49,14 @@ class ShowAction[F[_]: {MonadThrow, Console}](using
   }
 
   override def keywords: List[ActionKeyword] = List(SHOW)
+
+  override protected def help: StateT[F, WindowsMap[F], AdditionalActions] =
+    StateT.liftF(
+      Console[F].println("show: shows the image(s) window.")
+        >> Console[F].println("syntax: show // applies to the first image on the status list")
+        >> Console[F].println("syntax: show <id>  // applies to an image identified by 'id'")
+        >> AdditionalActions.empty.pure[F]
+    )
 }
 
 object ShowAction {

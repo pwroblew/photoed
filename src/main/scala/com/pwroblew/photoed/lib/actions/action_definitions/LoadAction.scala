@@ -43,6 +43,11 @@ class LoadAction[F[_]: {MonadThrow, Console}](
   }
 
   override def keywords: List[ActionKeyword] = List(LOAD, LOAD_RES)
+
+  override protected def helpB: F[AdditionalActions] =
+    Console[F].println("load: loads the image from disk and assigns to it the provided id")
+      >> Console[F].println("syntax: load <filename> <img-id>")
+      >> AdditionalActions.empty.pure
 }
 
 object LoadAction {
@@ -57,7 +62,6 @@ object LoadAction {
       imageLoaded <- edImageLoader(path)
       _           <- appState.update(state =>
                        state.copy(
-                         history = state.history :+ s"[loaded: $path]",
                          imagesStatuses = state.imagesStatuses :+ ImageStatus(imageId, imageLoaded)
                        )
                      )

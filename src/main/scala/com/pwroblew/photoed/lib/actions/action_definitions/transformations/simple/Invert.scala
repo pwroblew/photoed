@@ -20,4 +20,8 @@ object Invert extends SimpleTransformation {
   }
 
   override def keywords: List[ActionKeyword] = List(INVERT)
+
+  override def help: String =
+    s"""invert: inverts the colors of the image
+       |syntax: invert <id>""".stripMargin
 }

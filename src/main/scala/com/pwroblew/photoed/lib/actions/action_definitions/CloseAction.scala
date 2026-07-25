@@ -43,6 +43,14 @@ class CloseAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
   }
 
   override def keywords: List[ActionKeyword] = List(CLOSE)
+
+  override protected def help: StateT[F, WindowsMap[F], AdditionalActions] =
+    StateT.liftF(
+      Console[F].println("close: closes the image(s) window.")
+        >> Console[F].println("syntax: close ALL  // applies to ALL images")
+        >> Console[F].println("syntax: close <id>  // applies to an image identified by 'id'")
+        >> AdditionalActions.empty.pure[F]
+    )
 }
 
 object CloseAction {
