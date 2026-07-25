@@ -19,6 +19,10 @@ trait EditorActionBasic[F[_]: {MonadThrow, Console}] extends EditorActionShowabl
 
   def actB(state: Ref[F, PhotoEdAppState[F]], commandDetails: List[String]): F[AdditionalActions]
 
+  override def help: StateT[F, WindowsMap[F], AdditionalActions] = StateT.liftF(helpB)
+
+  protected def helpB: F[AdditionalActions]
+
 }
 
 object EditorActionBasic {
@@ -31,5 +35,7 @@ object EditorActionBasic {
       AdditionalActions(List.empty, List.empty).pure[F]
 
     override def keywords: List[ActionKeyword] = List.empty[ActionKeyword]
+
+    override protected def helpB: F[AdditionalActions] = AdditionalActions(List.empty, List.empty).pure[F]
   }
 }

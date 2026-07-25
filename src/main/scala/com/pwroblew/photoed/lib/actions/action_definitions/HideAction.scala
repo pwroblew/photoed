@@ -43,6 +43,14 @@ class HideAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F] {
   }
 
   override def keywords: List[ActionKeyword] = List(HIDE)
+
+  override protected def help: StateT[F, WindowsMap[F], AdditionalActions] =
+    StateT.liftF(
+      Console[F].println("hide: hides the image(s) window.")
+        >> Console[F].println("syntax: hide // applies to the first image on the status list")
+        >> Console[F].println("syntax: hide <id>  // applies to an image identified by 'id'")
+        >> AdditionalActions.empty.pure[F]
+    )
 }
 
 object HideAction {

@@ -1,6 +1,7 @@
 package com.pwroblew.photoed.lib.actions.action_definitions
 
 import cats.MonadThrow
+import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
@@ -37,4 +38,7 @@ class TransformAction[F[_]: {MonadThrow,
   }
 
   override def keywords: List[ActionKeyword] = transformation.keywords
+
+  override protected def helpB: F[AdditionalActions] =
+    Console[F].println(transformation.help) >> AdditionalActions.empty.pure
 }

@@ -23,11 +23,8 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
     val actionDetailsFMaybe: OptionT[F, (EditorActionShowable[F], List[String])] = for {
       cmdLine       <- OptionT(stateRef.get.map(_.commands.headOption))
       commandDetails = cmdLine.trim.split("\\s+", 10).toList
-      action        <- OptionT.liftF(getCommandActionF(
-                         cmdLine,
-                         commandDetails,
-                         EditorActions.allActionsMap[F].get
-                       ).onError(_ => stateRef.update(state => state.copy(commands = state.commands.tail))))
+      action        <- OptionT.liftF(getCommandActionF(commandDetails, EditorActions.allActionsMap[F].get)
+                         .onError(_ => stateRef.update(state => state.copy(commands = state.commands.tail))))
     } yield (action, commandDetails)
 
     val actionDetailsF: F[(EditorActionShowable[F], List[String])] = actionDetailsFMaybe.getOrRaise(
@@ -36,7 +33,7 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
 
     for {
       (action, commandDetails) <- StateT.liftF(actionDetailsF)
-      additionalActions        <- action.act(stateRef, commandDetails, windowsManager)
+      additionalActions        <- action.processCmd(stateRef, commandDetails, windowsManager)
                                     .handleErrorWith(_ => StateT.liftF(AdditionalActions.empty.pure[F]))
       _                        <- StateT.liftF(for {
                                     _ <- stateRef.update(state =>
@@ -52,14 +49,14 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
   }
 
   private def getCommandActionF[EdAction[_[_]]](
-      command: String,
       commandDetails: List[String],
       getAction: ActionKeyword => Option[EdAction[F]]
   ): F[EdAction[F]] = {
-    OptionT.fromOption[F](commandDetails.headOption.flatMap(ActionKeyword.fromCmd))
+    val maybeCommand: Option[String] = commandDetails.headOption
+    OptionT.fromOption[F](maybeCommand.flatMap(ActionKeyword.fromCmd))
       .subflatMap(getAction)
       .getOrRaise(new IllegalArgumentException(
-        s"Error: Unsupported image processing command provided: \"$command\". Please provide \"exit\" to exit the app."
+        s"Error: Unsupported image processing command provided: \"${maybeCommand.getOrElse("")}\".\nPlease type \"help\" or \"exit\"."
       ))
   }
 

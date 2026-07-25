@@ -25,4 +25,9 @@ final class ExitAction[F[_]: {MonadThrow, Console}] extends EditorActionBasic[F]
   }
 
   override def keywords: List[ActionKeyword] = List(EXIT, EXIT_RAW)
+
+  override protected def helpB: F[AdditionalActions] =
+    Console[F].println("exit: closes all resources/windows and exits the application")
+      >> Console[F].println("syntax: exit")
+      >> AdditionalActions.empty.pure
 }

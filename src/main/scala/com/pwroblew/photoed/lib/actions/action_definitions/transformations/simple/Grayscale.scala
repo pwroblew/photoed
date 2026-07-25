@@ -14,4 +14,8 @@ object Grayscale extends SimpleTransformation {
   }
 
   override def keywords: List[ActionKeyword] = List(GRAYSCALE, GREYSCALE)
+
+  override def help: String =
+    s"""greyscale: converts the image to the greyscale
+       |syntax: greyscale <id>""".stripMargin
 }

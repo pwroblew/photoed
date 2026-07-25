@@ -42,6 +42,8 @@ class DisplayAction[F[_]: {MonadThrow, Console}] extends EditorActionShowable[F]
   }
 
   override def keywords: List[ActionKeyword] = List(DISPLAY)
+
+  override protected def help: StateT[F, WindowsMap[F], AdditionalActions] = AdditionalActions.empty.pure
 }
 
 object DisplayAction {

@@ -45,6 +45,11 @@ class SaveAction[F[_]: {MonadThrow, Console}](imageLoader: ImageFileMgmnt[F])
   }
 
   override def keywords: List[ActionKeyword] = List(SAVE, SAVE_RES)
+
+  override protected def helpB: F[AdditionalActions] =
+    Console[F].println("save: saves the image to a disk file with provided path/filename")
+      >> Console[F].println("syntax: save <img-id> <filename>")
+      >> AdditionalActions.empty.pure
 }
 
 object SaveAction {

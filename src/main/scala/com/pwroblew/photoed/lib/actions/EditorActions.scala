@@ -1,17 +1,17 @@
 package com.pwroblew.photoed.lib.actions
 
 import cats.MonadThrow
-import cats.effect.Resource
-import cats.effect.std.{Console, Dispatcher}
+import cats.effect.std.Console
 import com.pwroblew.photoed.StatefulCLI.MakeImageWindowResource
-import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.*
+import com.pwroblew.photoed.lib.ImageFileMgmnt
 import com.pwroblew.photoed.lib.actions.action_definitions.*
-import com.pwroblew.photoed.lib.{ImageFileMgmnt, ImageWindow}
+import com.pwroblew.photoed.lib.actions.action_definitions.transformations.simple.*
 
 object EditorActions {
 
   def basicActions[F[_]: {MonadThrow, Console}](using
-      imageLoader: ImageFileMgmnt[F]
+      imageLoader: ImageFileMgmnt[F],
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): List[EditorActionBasic[F]] = List(
     ClearAction[F],
     LoadAction[F],
@@ -19,7 +19,8 @@ object EditorActions {
     ExitAction[F],
     TransformAction[F](Invert),
     TransformAction[F](Grayscale),
-    HistoryAction[F]
+    HistoryAction[F],
+    HelpAction[F]
   )
 
   def showingActions[F[_]: {MonadThrow, Console}](using
@@ -45,7 +46,8 @@ object EditorActions {
     actionsMap(basicActions[F]) ++ actionsMap(showingActions[F])
 
   def basicActionsMap[F[_]: {MonadThrow, Console}](using
-      imageLoader: ImageFileMgmnt[F]
+      imageLoader: ImageFileMgmnt[F],
+      makeImageWindowResource: MakeImageWindowResource[F]
   ): Map[ActionKeyword, EditorActionBasic[F]] =
     actionsMap(basicActions[F])
 

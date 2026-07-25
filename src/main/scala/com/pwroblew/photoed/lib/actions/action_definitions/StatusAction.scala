@@ -47,4 +47,9 @@ class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionShowable[F] 
   }
 
   override def keywords: List[ActionKeyword] = List(STATUS)
+
+  override protected def help: StateT[F, WindowsMap[F], AdditionalActions] =
+    StateT.liftF(Console[F].println("status: prints the status of currently loaded images")
+      >> Console[F].println("syntax: status")
+      >> AdditionalActions.empty.pure)
 }

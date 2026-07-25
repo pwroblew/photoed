@@ -16,9 +16,21 @@ trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
       windowsManager: WindowsManager[F]
   ): StateT[F, WindowsMap[F], AdditionalActions]
 
+  def processCmd(
+      state: Ref[F, PhotoEdAppState[F]],
+      commandDetails: List[String],
+      windowsManager: WindowsManager[F]
+  ): StateT[F, WindowsMap[F], AdditionalActions] = {
+    if commandDetails.tail.headOption.contains("help") then help
+    else act(state, commandDetails, windowsManager)
+  }
+
   def keywords: List[ActionKeyword]
 
-  def maybeImageId(commandDetails: List[String]): Option[String] = commandDetails.tail.headOption
+  protected def maybeImageId(commandDetails: List[String]): Option[String] = commandDetails.tail.headOption
+
+  protected def help: StateT[F, WindowsMap[F], AdditionalActions]
+
 }
 
 object EditorActionShowable {
@@ -33,5 +45,8 @@ object EditorActionShowable {
         AdditionalActions(List.empty, List.empty).pure
 
       override def keywords: List[ActionKeyword] = List.empty[ActionKeyword]
+
+      override protected def help: StateT[F, WindowsMap[F], AdditionalActions] =
+        AdditionalActions(List.empty, List.empty).pure
     }
 }

@@ -31,4 +31,9 @@ class HistoryAction[F[_]: {Console, MonadThrow}] extends EditorActionBasic[F] {
   }
 
   override def keywords: List[ActionKeyword] = List(HISTORY)
+
+  override protected def helpB: F[AdditionalActions] =
+    Console[F].println("history: prints the history of entered commands")
+      >> Console[F].println("syntax: history")
+      >> AdditionalActions.empty.pure
 }
