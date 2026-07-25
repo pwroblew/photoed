@@ -1,6 +1,6 @@
 package com.pwroblew.photoed.lib.impl_f
 
-import cats.MonadThrow
+import cats.{MonadThrow, Show}
 import cats.data.{OptionT, StateT}
 import cats.effect.*
 import cats.effect.std.Console
@@ -9,6 +9,23 @@ import com.pwroblew.photoed
 import com.pwroblew.photoed.StatefulCLI.MakeImageWindowResource
 import com.pwroblew.photoed.lib.*
 import com.pwroblew.photoed.lib.actions.*
+
+import java.nio.charset.Charset
+
+class IndentedConsole[H[_]: Console] extends Console[H] {
+  private val underlying     = Console[H]
+  private val indent: String = " " * 4
+
+  override def readLineWithCharset(charset: Charset): H[String] = underlying.readLineWithCharset(charset)
+
+  override def print[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.print(s">>$indent$a")
+
+  override def println[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.println(s">>$indent$a")
+
+  override def error[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.error(s"$indent$a")
+
+  override def errorln[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.errorln(s"$indent$a")
+}
 
 final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
     imageFileMgmnt: ImageFileMgmnt[F],
@@ -75,5 +92,8 @@ object PhotoEdAppImpl {
   def apply[F[_]: {MonadThrow, Console, Async}](using
       imageLoader: ImageFileMgmnt[F],
       makeImageWindowResource: MakeImageWindowResource[F]
-  ): PhotoEdAppImpl[F] = new PhotoEdAppImpl[F]
+  ): PhotoEdAppImpl[F] = {
+    given Console[F] = new IndentedConsole[F]
+    new PhotoEdAppImpl[F]
+  }
 }

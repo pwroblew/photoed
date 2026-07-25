@@ -1,12 +1,14 @@
 package com.pwroblew.photoed.lib.actions
 
-import cats.MonadThrow
+import cats.{MonadThrow, Show}
 import cats.data.StateT
 import cats.effect.Ref
 import cats.effect.std.Console
 import cats.syntax.all.*
 import com.pwroblew.photoed.lib.PhotoEdAppState
 import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
+
+import java.nio.charset.Charset
 
 trait EditorActionShowable[F[_]: {MonadThrow, Console}] {
 

@@ -12,8 +12,6 @@ import com.pwroblew.photoed.lib.impl_f.{WindowsManager, WindowsMap}
 
 class StatusAction[F[_]: {Console, MonadThrow}] extends EditorActionShowable[F] {
 
-  private val indent: String = " " * 4
-
   override def act(
       stateRef: Ref[F, PhotoEdAppState[F]],
       commandDetails: List[String],
