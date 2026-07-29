@@ -1,26 +1,40 @@
-# Command line image editor
 
-## Short description
+# PhotoEd — Command-Line Image Editor
 
-This is a version of a photo editor application suggested by Daniel Ciocirlan in his course (link below).
-Here however, the application is an `IOApp` application and everything is purely functional.
-The main goal of this project was to demonstrate using of cats-effect's `IO` for this kind of applications
-rather than to implement an extensive set of image manipulation functions. If there is anything missing for image
-manipulation,
-it will be added in future.
+PhotoEd is a command-line image editor written in Scala using Cats Effect.
 
-Links:
+The project is based on the photo editor application proposed by Daniel Ciocîrlan in the Rock the JVM Scala Projects course. Unlike the original version, PhotoEd is implemented as an `IOApp`, with application logic and state management expressed using purely functional programming techniques.
 
-- https://github.com/rockthejvm/scala-projects/tree/master/photoscala/src/main/scala/com/rockthejvm/photoscala
-- https://rockthejvm.com/courses/scala-projects
+The main goal of the project is not to provide a comprehensive image-editing toolkit. Instead, it demonstrates how Cats Effect's `IO`, `Ref`, `Resource`, and other functional abstractions can be used to build an interactive application that combines:
 
-## Usage
+- command-line input,
+- mutable application state represented safely with `Ref`,
+- image loading and saving,
+- Swing windows,
+- resource management,
+- and communication between the Cats Effect runtime and the Swing Event Dispatch Thread (EDT).
 
-To build it, use standard sbt commands:
+Additional image-processing operations may be added in the future.
 
-```
+## Inspiration
+
+The project was inspired by:
+
+- PhotoScala source code: https://github.com/rockthejvm/scala-projects/tree/master/photoscala/src/main/scala/com/rockthejvm/photoscala
+- Rock the JVM – Scala Projects: https://rockthejvm.com/courses/scala-projects
+
+## Building the application
+
+To create an executable assembly JAR, run:
+
+```bash
+sbt assembly
+````
+
+Other useful SBT commands include:
+
+```bash
 sbt clean
-sbt scalafmt
 sbt scalafmtCheckAll
 sbt compile
 sbt test
@@ -28,49 +42,97 @@ sbt package
 sbt assembly
 ```
 
-### Running it
+## Running the application
 
-Either by sbt:
+Run the application directly with SBT:
 
-```
+```bash
 sbt run
 ```
 
-or from the assembled jar:
+Or execute the assembled JAR:
 
-```
+```bash
 java -jar target/scala-3.x.x/photoed-assembly-x.y.z.jar
 ```
 
-You provide commands to the application and then each command is parsed and executed.
-The application keeps its internal state that changes over time, so it evolves while you provide more commands.
+For example:
 
-Sample usage:
-
-```
+```bash
 java -jar target/scala-3.8.3/photoed-assembly-0.1.0-SNAPSHOT.jar
-Please provide a command: load src/main/resources/birdie.png
-Please provide a command: invert
-Please provide a command: grayscale
-Please provide a command: invert
-Please provide a command: exit
 ```
 
-## Input format
+## Usage
 
-The app can read standard format of image files.
-However it can write to a file only: jpeg, png or gif.
+PhotoEd is an interactive command-line application. Commands are entered in the terminal, parsed, and executed sequentially.
 
-## Available commands
+The application maintains an internal state containing loaded images and their associated windows. This state evolves as commands are executed.
 
-- `load <file-path>` - loads an image relative to the current location
-- `load-res <file-path>` - a helper load that prepends `src/main/resources` to the path
-- `save <file-path>` - saves the image at the provided path
-- `save-res` - similarly to `save` as `load-res` to `load`
-- `exit` - exits the application
-- `invert` - inverts the currently loaded image
-- `grayscale` - grayscaling of the currently loaded image
-- `status` - prints the current status of the app state
-- `clear` - removes the image from the state, making it empty
-- `show` - shows the image in a window
-- `hide` - closes the window with an image    
+To get started, enter:
+
+```text
+help
+```
+
+Most commands also support a `help` subcommand that explains their syntax.
+
+### Example session
+
+```text
+❯ java -jar target/scala-3.8.3/photoed-assembly-0.1.0-SNAPSHOT.jar
+>>    Please provide a command: load birdie2.png
+>>    An error encountered. Details: syntax: load <filename> <img-id>
+>>    Please provide a command: load birdie2.png b2
+>>    Please provide a command: load flowers.png f1
+>>    Please provide a command: invert b2
+>>    Please provide a command: greyscale f1
+>>    Please provide a command: hide f1
+>>    Please provide a command: close b2
+>>    Please provide a command: status
+>>    img-id:[b2]  |  img-loaded:[YES]  |  window:[NO]   |  being-shown:[NO]
+>>    img-id:[f1]  |  img-loaded:[YES]  |  window:[YES]  |  being-shown:[false]
+>>    Please provide a command: show b2
+>>    Please provide a command: show f1
+>>    Please provide a command: save b2
+>>    An error encountered. Details: syntax: save <img-id> <filename>
+>>    Please provide a command: save b2 birdie-inverted.jpg
+>>    Please provide a command: save f1 grey-flowers.gif
+>>    Please provide a command: history
+>>        load birdie2.png
+>>        load birdie2.png b2
+>>        show b2
+>>        display b2
+>>        load flowers.png f1
+>>        show f1
+>>        display f1
+>>        invert b2
+>>        display b2
+>>        greyscale f1
+>>        display f1
+>>        hide f1
+>>        close b2
+>>        status
+>>        show b2
+>>        display b2
+>>        show f1
+>>        display f1
+>>        save b2
+>>        save b2 birdie-inverted.jpg
+>>        save f1 grey-flowers.gif
+>>    Please provide a command: exit
+```
+
+## Supported image formats
+
+PhotoEd can read image formats supported by Java's `ImageIO` API.
+
+Images can currently be written in the following formats:
+
+* JPEG
+* PNG
+* GIF
+
+The output format is inferred from the target file extension.
+
+```
+```

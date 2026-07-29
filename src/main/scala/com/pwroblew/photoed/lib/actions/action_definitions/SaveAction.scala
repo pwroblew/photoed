@@ -37,7 +37,7 @@ class SaveAction[F[_]: {MonadThrow, Console}](imageLoader: ImageFileMgmnt[F])
 
       for {
         path <- ApplicativeError[F, Throwable].fromEither(pathOrError)
-        _    <- saveImage(imageLoader.save)(state, path)
+        _    <- saveImage(imageLoader.save)(state, path, imageId)
       } yield AdditionalActions.empty
 
     }
@@ -59,11 +59,12 @@ object SaveAction {
 
   def saveImage[F[_]: MonadThrow](imageSaver: (Image, String) => F[Unit])(
       appState: Ref[F, PhotoEdAppState[F]],
-      path: String
+      path: String,
+      imageId: String
   ): F[Unit] = {
 
     val res: OptionT[F, Unit] = for {
-      image <- OptionT(appState.get.map(state => state.imagesStatuses.headOption.map(_.image)))
+      image <- OptionT(appState.get.map(state => state.imagesStatuses.find(_.id == imageId).map(_.image)))
       path  <- OptionT.pure[F](path)
       _     <- OptionT.liftF(imageSaver(image, path))
       _     <- OptionT.liftF(appState.update(state =>

@@ -13,18 +13,24 @@ import com.pwroblew.photoed.lib.actions.*
 import java.nio.charset.Charset
 
 class IndentedConsole[H[_]: Console] extends Console[H] {
-  private val underlying     = Console[H]
-  private val indent: String = " " * 4
+  private val underlying: Console[H] = Console[H]
+  private val indent: String         = " " * 4
+  private val prefix: String         = s">>$indent"
+
+  private def addLinePrefix[A: Show](a: A): String = {
+    val strA: String = Show[A].show(a).replace("\n", s"\n$prefix")
+    s"$prefix$strA"
+  }
 
   override def readLineWithCharset(charset: Charset): H[String] = underlying.readLineWithCharset(charset)
 
-  override def print[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.print(s">>$indent$a")
+  override def print[A: Show](a: A): H[Unit] = underlying.print(addLinePrefix(a))
 
-  override def println[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.println(s">>$indent$a")
+  override def println[A: Show](a: A): H[Unit] = underlying.println(addLinePrefix(a))
 
-  override def error[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.error(s"$indent$a")
+  override def error[A: Show](a: A): H[Unit] = underlying.error(addLinePrefix(a))
 
-  override def errorln[A](a: A)(implicit S: Show[A]): H[Unit] = underlying.errorln(s"$indent$a")
+  override def errorln[A: Show](a: A): H[Unit] = underlying.errorln(addLinePrefix(a))
 }
 
 final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
@@ -51,7 +57,12 @@ final class PhotoEdAppImpl[F[_]: {MonadThrow, Console, Async}](using
     for {
       (action, commandDetails) <- StateT.liftF(actionDetailsF)
       additionalActions        <- action.processCmd(stateRef, commandDetails, windowsManager)
-                                    .handleErrorWith(_ => StateT.liftF(AdditionalActions.empty.pure[F]))
+                                    .handleErrorWith { e =>
+                                      StateT.liftF(
+                                        Console[F].println(s"An error encountered. Details: ${e.getMessage}")
+                                          >> AdditionalActions.empty.pure[F]
+                                      )
+                                    }
       _                        <- StateT.liftF(for {
                                     _ <- stateRef.update(state =>
                                            state.copy(
